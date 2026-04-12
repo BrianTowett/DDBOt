@@ -1,0 +1,132 @@
+<xml xmlns="http://www.w3.org/1999/xhtml" is_dbot="true" collection="false">
+  <variables>
+    <variable type="" id="cmv_var_stake" islocal="false" iscloud="false">stake</variable>
+    <variable type="" id="cmv_var_stake_w" islocal="false" iscloud="false">stake w</variable>
+    <variable type="" id="cmv_var_stop_loss" islocal="false" iscloud="false">stop loss</variable>
+    <variable type="" id="cmv_var_take_profit" islocal="false" iscloud="false">take profit</variable>
+    <variable type="" id="cmv_var_duration_ticks" islocal="false" iscloud="false">Duration ticks</variable>
+    <variable type="" id="cmv_var_martingale" islocal="false" iscloud="false">Product Martingale after loss</variable>
+  </variables>
+  <block type="trade_definition" id="cmv_trade" deletable="false" x="0" y="60">
+    <statement name="TRADE_OPTIONS">
+      <block type="trade_definition_market" id="cmv_market" deletable="false" movable="false">
+        <field name="MARKET_LIST">synthetic_index</field>
+        <field name="SUBMARKET_LIST">continuous</field>
+        <field name="SYMBOL_LIST">R_100</field>
+        <next>
+          <block type="trade_definition_tradetype" id="cmv_tradetype" deletable="false" movable="false">
+            <field name="TRADETYPECAT_LIST">digits</field>
+            <field name="TRADETYPE_LIST">evenodd</field>
+            <next>
+              <block type="trade_definition_contracttype" id="cmv_contracttype" deletable="false" movable="false">
+                <field name="TYPE_LIST">DIGITEVEN</field>
+                <next>
+                  <block type="trade_definition_candleinterval" id="cmv_candle" deletable="false" movable="false">
+                    <field name="CANDLEINTERVAL_LIST">60</field>
+                    <next>
+                      <block type="trade_definition_restartbuysell" id="cmv_restartbuysell" deletable="false" movable="false">
+                        <field name="TIME_MACHINE_ENABLED">FALSE</field>
+                        <next>
+                          <block type="trade_definition_restartonerror" id="cmv_restartonerror" deletable="false" movable="false">
+                            <field name="RESTARTONERROR">TRUE</field>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+    <statement name="INITIALIZATION">
+      <block type="variables_set" id="cmv_set_stake">
+        <field name="VAR" id="cmv_var_stake" variabletype="">stake</field>
+        <value name="VALUE">
+          <block type="math_number" id="cmv_num_stake">
+            <field name="NUM">1</field>
+          </block>
+        </value>
+        <next>
+          <block type="variables_set" id="cmv_set_stake_w">
+            <field name="VAR" id="cmv_var_stake_w" variabletype="">stake w</field>
+            <value name="VALUE">
+              <block type="math_number" id="cmv_num_stake_w">
+                <field name="NUM">1</field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set" id="cmv_set_stop_loss">
+                <field name="VAR" id="cmv_var_stop_loss" variabletype="">stop loss</field>
+                <value name="VALUE">
+                  <block type="math_number" id="cmv_num_stop_loss">
+                    <field name="NUM">2000</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="variables_set" id="cmv_set_take_profit">
+                    <field name="VAR" id="cmv_var_take_profit" variabletype="">take profit</field>
+                    <value name="VALUE">
+                      <block type="math_number" id="cmv_num_take_profit">
+                        <field name="NUM">2</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="variables_set" id="cmv_set_duration_ticks">
+                        <field name="VAR" id="cmv_var_duration_ticks" variabletype="">Duration ticks</field>
+                        <value name="VALUE">
+                          <block type="math_number" id="cmv_num_duration_ticks">
+                            <field name="NUM">1</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="variables_set" id="cmv_set_martingale">
+                            <field name="VAR" id="cmv_var_martingale" variabletype="">Product Martingale after loss</field>
+                            <value name="VALUE">
+                              <block type="math_number" id="cmv_num_martingale">
+                                <field name="NUM">1</field>
+                              </block>
+                            </value>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+    <statement name="SUBMARKET">
+      <block type="trade_definition_tradeoptions" id="cmv_tradeoptions">
+        <mutation has_first_barrier="false" has_second_barrier="false" has_prediction="false"></mutation>
+        <field name="DURATIONTYPE_LIST">t</field>
+        <value name="DURATION">
+          <shadow type="math_number" id="cmv_dur_shadow">
+            <field name="NUM">1</field>
+          </shadow>
+          <block type="variables_get" id="cmv_get_duration_ticks">
+            <field name="VAR" id="cmv_var_duration_ticks" variabletype="">Duration ticks</field>
+          </block>
+        </value>
+        <value name="AMOUNT">
+          <shadow type="math_number" id="cmv_amt_shadow">
+            <field name="NUM">1</field>
+          </shadow>
+          <block type="variables_get" id="cmv_get_stake">
+            <field name="VAR" id="cmv_var_stake" variabletype="">stake</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+    <statement name="BEFORE_PURCHASE">
+      <block type="purchase" id="cmv_purchase">
+        <field name="PURCHASE_LIST">DIGITEVEN</field>
+      </block>
+    </statement>
+  </block>
+</xml>

@@ -1,0 +1,96 @@
+import React, { useState, useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
+import { useStore } from '@/hooks/useStore';
+import './analysis-tool.scss';
+
+const DCirclesAnalysis = observer(() => {
+    const { ticks_store } = useStore();
+    const [digitStats, setDigitStats] = useState<any[]>([]);
+
+    useEffect(() => {
+        const updateStats = () => {
+            const stats = ticks_store.getDigitStats(1000);
+            if (stats) {
+                const formattedStats = stats.map((percentage: number, digit: number) => ({
+                    digit,
+                    percentage: parseFloat(percentage.toFixed(1)),
+                }));
+                setDigitStats(formattedStats);
+            }
+        };
+
+        const interval = setInterval(updateStats, 1000);
+        return () => clearInterval(interval);
+    }, [ticks_store]);
+
+    const getSortedStats = () => {
+        return [...digitStats].sort((a, b) => b.percentage - a.percentage);
+    };
+
+    const sorted = getSortedStats();
+    const mostAppearing = sorted[0];
+    const secondMost = sorted[1];
+    const leastAppearing = sorted[sorted.length - 1];
+    const secondLeast = sorted[sorted.length - 2];
+
+    const isEven = (d: number) => d % 2 === 0;
+    const isOdd = (d: number) => d % 2 !== 0;
+
+    const checkDCircles = () => {
+        if (digitStats.length === 0) return false;
+
+        const cond1_even = isEven(mostAppearing.digit) && isEven(secondMost.digit);
+        const cond1_percent = mostAppearing.percentage > 11 && secondMost.percentage > 11;
+        const cond1_red_yellow = leastAppearing.percentage <= 8.6 && secondLeast.percentage <= 9.5;
+        const mainCondition = cond1_even && cond1_percent && cond1_red_yellow;
+
+        const var1 = isOdd(mostAppearing.digit) && isOdd(secondMost.digit) && mostAppearing.percentage >= 11 && secondMost.percentage >= 11;
+        const var2 = isEven(leastAppearing.digit) && isEven(secondLeast.digit) && leastAppearing.percentage <= 8.6 && secondLeast.percentage <= 9.5;
+
+        return mainCondition || var1 || var2;
+    };
+
+    const isDcirclesActive = checkDCircles();
+
+    return (
+        <div className='dcircles-analysis'>
+            <div className='analysis-tool__header-info'>
+                <h2>Dcircles Analysis</h2>
+                <div className={`analysis-tool__status-badge ${isDcirclesActive ? 'active' : ''}`}>
+                    {isDcirclesActive ? 'CONDITIONS MET' : 'WAITING FOR CONDITIONS'}
+                </div>
+            </div>
+
+            <div className='analysis-tool__digit-grid'>
+                {digitStats.map((stat) => {
+                    let typeClass = '';
+                    if (stat.digit === mostAppearing?.digit) typeClass = 'most';
+                    else if (stat.digit === secondMost?.digit) typeClass = 'second-most';
+                    else if (stat.digit === leastAppearing?.digit) typeClass = 'least';
+                    else if (stat.digit === secondLeast?.digit) typeClass = 'second-least';
+
+                    return (
+                        <div key={stat.digit} className={`digit-circle ${typeClass}`}>
+                            <div className='digit-circle__number'>{stat.digit}</div>
+                            <div className='digit-circle__percent'>{stat.percentage}%</div>
+                            {typeClass === 'most' && <div className='digit-circle__label'>most</div>}
+                            {typeClass === 'least' && <div className='digit-circle__label'>least frequency</div>}
+                        </div>
+                    );
+                })}
+            </div>
+            
+            <div className='analysis-tool__iframe-wrapper'>
+                <iframe
+                    src='https://bot-analysis-tool-belex.web.app'
+                    className='analysis-tool__iframe'
+                    title='Bot Analysis Tool'
+                    allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+                    allowFullScreen
+                />
+            </div>
+        </div>
+    );
+});
+
+export default DCirclesAnalysis;

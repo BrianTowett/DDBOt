@@ -1,0 +1,11 @@
+# Enable mod_rewrite
+RewriteEngine On
+RewriteBase /
+
+# If the request is for an existing file or directory, serve it
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Otherwise, redirect all requests to index.html
+RewriteRule ^ index.html [L]

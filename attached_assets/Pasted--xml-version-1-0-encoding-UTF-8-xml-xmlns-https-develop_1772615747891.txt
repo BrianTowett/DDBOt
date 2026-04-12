@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml xmlns="https://developers.google.com/blockly/xml">
+
+  <!-- TRADE PARAMETERS -->
+  <block type="trade_definition" id="trade_def" deletable="false" x="20" y="20">
+    <field name="MARKET">synthetic_index</field>
+    <field name="SYMBOL">R_75_1S</field>
+    <field name="TRADETYPECAT">digits</field>
+    <field name="TRADETYPE">evenodd</field>
+    <field name="CONTRACTTYPE">EVEN</field>
+    <next>
+
+      <!-- RUN ONCE AT START -->
+      <block type="on_strategy_start" id="on_start">
+        <statement name="STRATEGY_STACK">
+
+          <!-- SET STAKE -->
+          <block type="variables_set">
+            <field name="VAR">stake</field>
+            <value name="VALUE">
+              <block type="math_number">
+                <field name="NUM">0.35</field>
+              </block>
+            </value>
+            <next>
+
+              <!-- SET STOP LOSS -->
+              <block type="variables_set">
+                <field name="VAR">stop_loss</field>
+                <value name="VALUE">
+                  <block type="math_number">
+                    <field name="NUM">2000</field>
+                  </block>
+                </value>
+                <next>
+
+                  <!-- SET TAKE PROFIT -->
+                  <block type="variables_set">
+                    <field name="VAR">take_profit</field>
+                    <value name="VALUE">
+                      <block type="math_number">
+                        <field name="NUM">0.7</field>
+                      </block>
+                    </value>
+                    <next>
+
+                      <!-- SET DURATION -->
+                      <block type="variables_set">
+                        <field name="VAR">duration</field>
+                        <value name="VALUE">
+                          <block type="math_number">
+                            <field name="NUM">3</field>
+                          </block>
+                        </value>
+                        <next>
+
+                          <!-- MARTINGALE AFTER LOSS -->
+                          <block type="variables_set">
+                            <field name="VAR">martingale_after_loss</field>
+                            <value name="VALUE">
+                              <block type="math_number">
+                                <field name="NUM">1</field>
+                              </block>
+                            </value>
+                          </block>
+
+                        </next>
+                      </block>
+
+                    </next>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </statement>
+        <next>
+
+          <!-- PURCHASE CONDITIONS -->
+          <block type="purchase">
+            <field name="CONDITION">always</field>
+          </block>
+
+        </next>
+      </block>
+
+    </next>
+  </block>
+
+</xml>
