@@ -52,9 +52,10 @@ const CONFIRM_WINDOW = 5;
 const TICK_SIZES = [100, 200, 500, 1000];
 const DEFAULT_TICKS = 1000;
 
-const LS_NOTIF_ON = 'eo_notif_on';
-const LS_NOTIF_SND = 'eo_notif_snd';
-const LS_LOCKED_SYM = 'eo_locked_sym';
+const LS_NOTIF_ON     = 'eo_notif_on';
+const LS_NOTIF_SND    = 'eo_notif_snd';
+const LS_LOCKED_SYM   = 'eo_locked_sym';
+const LS_DANGER_SND   = 'eo_danger_snd';
 
 // ── Sound definitions ─────────────────────────────────────────────────────────
 export type SoundId = 'chime' | 'alert' | 'bell' | 'ping' | 'trade' | 'crystal';
@@ -180,26 +181,114 @@ function playCrystal() {
     });
 }
 
-// ── Danger sound — fired only for the locked volatility signal exit ───────────
-function playDanger() {
+// ── Danger sounds — fired only for the locked volatility signal exit ──────────
+export type DangerSoundId = 'descend' | 'rapid' | 'siren' | 'rumble' | 'alarm';
+
+export const DANGER_SOUNDS: { id: DangerSoundId; label: string }[] = [
+    { id: 'descend', label: '🔴 Descending tones' },
+    { id: 'rapid',   label: '⚠️ Rapid triple beep' },
+    { id: 'siren',   label: '🚨 Siren wail' },
+    { id: 'rumble',  label: '💥 Bass rumble' },
+    { id: 'alarm',   label: '🔔 Alarm buzz' },
+];
+
+function playDangerDescend() {
+    const ctx = getAudioCtx();
+    const notes = [880, 660, 440, 330];
+    notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.13;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.38, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+        osc.start(t);
+        osc.stop(t + 0.5);
+    });
+}
+
+function playDangerRapid() {
+    const ctx = getAudioCtx();
+    [0, 0.18, 0.36].forEach(offset => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.value = 1200;
+        const t = ctx.currentTime + offset;
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    });
+}
+
+function playDangerSiren() {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.35);
+    osc.frequency.linearRampToValueAtTime(400, ctx.currentTime + 0.7);
+    osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 1.05);
+    gain.gain.setValueAtTime(0.35, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.1);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 1.15);
+}
+
+function playDangerRumble() {
+    const ctx = getAudioCtx();
+    [60, 80, 100].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.05;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.45, t + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+        osc.start(t);
+        osc.stop(t + 0.65);
+    });
+}
+
+function playDangerAlarm() {
+    const ctx = getAudioCtx();
+    [0, 0.22, 0.44, 0.66].forEach(offset => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.value = offset % 0.44 === 0 ? 660 : 880;
+        const t = ctx.currentTime + offset;
+        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        osc.start(t);
+        osc.stop(t + 0.2);
+    });
+}
+
+function playDangerById(id: DangerSoundId) {
     try {
-        const ctx = getAudioCtx();
-        // Descending urgent tones (opposite of chime)
-        const notes = [880, 660, 440, 330];
-        notes.forEach((freq, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sawtooth';
-            osc.frequency.value = freq;
-            const t = ctx.currentTime + i * 0.13;
-            gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.38, t + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
-            osc.start(t);
-            osc.stop(t + 0.5);
-        });
+        switch (id) {
+            case 'descend': return playDangerDescend();
+            case 'rapid':   return playDangerRapid();
+            case 'siren':   return playDangerSiren();
+            case 'rumble':  return playDangerRumble();
+            case 'alarm':   return playDangerAlarm();
+        }
     } catch (e) {
         console.warn('Danger sound failed:', e);
     }
@@ -387,6 +476,15 @@ const DPToolsAI: React.FC = () => {
     });
     const lockedSymRef = useRef<string | null>(lockedSymbol);
 
+    // Danger sound selection
+    const [dangerSoundId, setDangerSoundId] = useState<DangerSoundId>(() => {
+        try {
+            const v = localStorage.getItem(LS_DANGER_SND) as DangerSoundId | null;
+            return v && DANGER_SOUNDS.some(s => s.id === v) ? v : 'descend';
+        } catch { return 'descend'; }
+    });
+    const dangerSndRef = useRef<DangerSoundId>(dangerSoundId);
+
     const wsRef         = useRef<WebSocket | null>(null);
     const reqMapRef     = useRef<Record<number, string>>({});
     const stateRef      = useRef<MarketsMap>({});
@@ -414,6 +512,11 @@ const DPToolsAI: React.FC = () => {
             else localStorage.removeItem(LS_LOCKED_SYM);
         } catch {}
     }, [lockedSymbol]);
+
+    useEffect(() => {
+        dangerSndRef.current = dangerSoundId;
+        try { localStorage.setItem(LS_DANGER_SND, dangerSoundId); } catch {}
+    }, [dangerSoundId]);
 
     const initMarkets = useCallback((list: { label: string; value: string }[]) => {
         const init: MarketsMap = {};
@@ -446,7 +549,7 @@ const DPToolsAI: React.FC = () => {
             prev !== 'NEUTRAL' &&
             current === 'NEUTRAL'
         ) {
-            playDanger();
+            playDangerById(dangerSndRef.current);
         }
 
         // Regular notification: any market gains a confirmed signal
@@ -627,6 +730,11 @@ const DPToolsAI: React.FC = () => {
         setLockedSymbol(prev => (prev === sym ? null : sym));
     };
 
+    const handleDangerSound = (id: DangerSoundId) => {
+        setDangerSoundId(id);
+        playDangerById(id);
+    };
+
     const readyMarkets   = marketList.filter(m => markets[m.value]?.ready);
     const evenCount      = readyMarkets.filter(m => markets[m.value]?.confirmedSignal === 'EVEN').length;
     const oddCount       = readyMarkets.filter(m => markets[m.value]?.confirmedSignal === 'ODD').length;
@@ -705,43 +813,32 @@ const DPToolsAI: React.FC = () => {
                                 </button>
                             ))}
 
-                            {/* ── Lock confirm volatility ───────────────────── */}
+                            {/* ── Danger sound (for locked volatility exit) ─── */}
                             <div className='dp-ai__sound-title dp-ai__sound-title--danger' style={{ marginTop: 12 }}>
-                                🔒 Lock confirm volatility (danger sound on exit):
+                                🔴 Danger sound — when locked volatility exits signal (click to preview):
                             </div>
-                            <div className='dp-ai__lock-hint'>
-                                {lockedLabel
-                                    ? <>Locked: <strong style={{ color: '#f85149' }}>{lockedLabel}</strong> — danger sound fires when its confirmed signal exits.</>
-                                    : 'None locked. Select a volatility below to lock it.'
-                                }
-                            </div>
-
-                            <div className='dp-ai__lock-grid'>
+                            {DANGER_SOUNDS.map(s => (
                                 <button
-                                    className={`dp-ai__lock-opt ${lockedSymbol === null ? 'dp-ai__lock-opt--none' : ''}`}
-                                    onClick={() => handleLockSymbol(null)}
+                                    key={s.id}
+                                    className={`dp-ai__sound-opt dp-ai__sound-opt--danger ${dangerSoundId === s.id ? 'dp-ai__sound-opt--active' : ''}`}
+                                    onClick={() => handleDangerSound(s.id)}
                                 >
-                                    None
+                                    {s.label}
+                                    {dangerSoundId === s.id && <span className='dp-ai__sound-check'>✓</span>}
                                 </button>
-                                {marketList.map(m => (
-                                    <button
-                                        key={m.value}
-                                        className={`dp-ai__lock-opt ${lockedSymbol === m.value ? 'dp-ai__lock-opt--active' : ''}`}
-                                        onClick={() => handleLockSymbol(m.value)}
-                                        title={`Lock ${m.label} — danger sound fires when confirmed signal exits`}
-                                    >
-                                        {m.label}
-                                    </button>
-                                ))}
-                            </div>
+                            ))}
 
-                            <button
-                                className='dp-ai__sound-opt dp-ai__sound-opt--preview-danger'
-                                onClick={playDanger}
-                                style={{ marginTop: 6 }}
-                            >
-                                🔴 Preview danger sound
-                            </button>
+                            {lockedLabel && (
+                                <div className='dp-ai__lock-hint' style={{ marginTop: 8 }}>
+                                    🔒 Locked: <strong style={{ color: '#f85149' }}>{lockedLabel}</strong>
+                                    <button
+                                        className='dp-ai__lock-clear-btn'
+                                        onClick={() => handleLockSymbol(null)}
+                                    >
+                                        Unlock
+                                    </button>
+                                </div>
+                            )}
 
                             <button className='dp-ai__sound-close' onClick={() => setShowSndPicker(false)}>
                                 Close
@@ -809,17 +906,26 @@ const DPToolsAI: React.FC = () => {
                                 className={`dp-ai__card dp-ai__card--${confirmed.toLowerCase()} ${isLocked ? 'dp-ai__card--locked' : ''}`}
                             >
                                 <div className='dp-ai__card-header'>
-                                    <span className='dp-ai__card-label'>
-                                        {isLocked && <span className='dp-ai__lock-icon'>🔒 </span>}
-                                        {m.label}
-                                    </span>
-                                    {ready && an ? (
-                                        <span className={`dp-ai__badge dp-ai__badge--${confirmed.toLowerCase()}`}>
-                                            {confirmed}
-                                        </span>
-                                    ) : (
-                                        <span className='dp-ai__badge dp-ai__badge--loading'>…</span>
-                                    )}
+                                    <span className='dp-ai__card-label'>{m.label}</span>
+                                    <div className='dp-ai__card-header-right'>
+                                        {ready && an ? (
+                                            <span className={`dp-ai__badge dp-ai__badge--${confirmed.toLowerCase()}`}>
+                                                {confirmed}
+                                            </span>
+                                        ) : (
+                                            <span className='dp-ai__badge dp-ai__badge--loading'>…</span>
+                                        )}
+                                        {/* Lock button — only shown when signal is confirmed */}
+                                        {confirmed !== 'NEUTRAL' && ready && (
+                                            <button
+                                                className={`dp-ai__card-lock-btn ${isLocked ? 'dp-ai__card-lock-btn--active' : ''}`}
+                                                onClick={() => handleLockSymbol(m.value)}
+                                                title={isLocked ? `Unlock ${m.label}` : `Lock ${m.label} — danger sound fires when signal exits`}
+                                            >
+                                                {isLocked ? '🔒' : '🔓'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {ready && an ? (
