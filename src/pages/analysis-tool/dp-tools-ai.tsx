@@ -182,112 +182,152 @@ function playCrystal() {
 }
 
 // ── Danger sounds — fired only for the locked volatility signal exit ──────────
-export type DangerSoundId = 'descend' | 'rapid' | 'siren' | 'rumble' | 'alarm';
+export type DangerSoundId = 'prison' | 'firesiren' | 'police' | 'emergency' | 'screech';
 
 export const DANGER_SOUNDS: { id: DangerSoundId; label: string }[] = [
-    { id: 'descend', label: '🔴 Descending tones' },
-    { id: 'rapid',   label: '⚠️ Rapid triple beep' },
-    { id: 'siren',   label: '🚨 Siren wail' },
-    { id: 'rumble',  label: '💥 Bass rumble' },
-    { id: 'alarm',   label: '🔔 Alarm buzz' },
+    { id: 'prison',    label: '🔒 Prison Gate Clang' },
+    { id: 'firesiren', label: '🚒 Fire Siren' },
+    { id: 'police',    label: '🚔 Police Two-Tone' },
+    { id: 'emergency', label: '🚨 Emergency Alarm' },
+    { id: 'screech',   label: '💀 Critical Screech' },
 ];
 
-function playDangerDescend() {
+// Prison gate: deep metallic CLANG → resonant decay, like a steel door slamming
+function playDangerPrison() {
     const ctx = getAudioCtx();
-    const notes = [880, 660, 440, 330];
-    notes.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
+    // Low metallic impact
+    const impactFreqs = [55, 110, 165, 220, 330];
+    impactFreqs.forEach((freq, i) => {
+        const osc  = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.type = 'sawtooth';
         osc.frequency.value = freq;
-        const t = ctx.currentTime + i * 0.13;
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.38, t + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
-        osc.start(t);
-        osc.stop(t + 0.5);
+        const vol = i === 0 ? 0.55 : 0.3 / i;
+        gain.gain.setValueAtTime(vol, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.8);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 2.0);
+    });
+    // High metallic ring
+    [1200, 1800].forEach((freq, i) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6 + i * 0.2);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.8 + i * 0.2);
     });
 }
 
-function playDangerRapid() {
+// Fire siren: fast up-down wail cycling 3× like a fire engine
+function playDangerFireSiren() {
     const ctx = getAudioCtx();
-    [0, 0.18, 0.36].forEach(offset => {
-        const osc = ctx.createOscillator();
+    // Three full wail cycles
+    for (let cycle = 0; cycle < 3; cycle++) {
+        const base = ctx.currentTime + cycle * 0.55;
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(600, base);
+        osc.frequency.linearRampToValueAtTime(1200, base + 0.22);
+        osc.frequency.linearRampToValueAtTime(600, base + 0.44);
+        gain.gain.setValueAtTime(0, base);
+        gain.gain.linearRampToValueAtTime(0.45, base + 0.05);
+        gain.gain.setValueAtTime(0.45, base + 0.42);
+        gain.gain.exponentialRampToValueAtTime(0.001, base + 0.54);
+        osc.start(base);
+        osc.stop(base + 0.56);
+    }
+}
+
+// Police two-tone: alternating HI/LO like a European police car
+function playDangerPolice() {
+    const ctx  = getAudioCtx();
+    const tones = [960, 700, 960, 700, 960, 700];
+    tones.forEach((freq, i) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.22;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.38, t + 0.03);
+        gain.gain.setValueAtTime(0.38, t + 0.19);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+        osc.start(t);
+        osc.stop(t + 0.23);
+    });
+}
+
+// Emergency alarm: rapid harsh bursts — like a building evacuation alarm
+function playDangerEmergency() {
+    const ctx = getAudioCtx();
+    for (let i = 0; i < 8; i++) {
+        const osc  = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.type = 'square';
-        osc.frequency.value = 1200;
-        const t = ctx.currentTime + offset;
+        osc.frequency.value = i % 2 === 0 ? 1400 : 1000;
+        const t = ctx.currentTime + i * 0.12;
         gain.gain.setValueAtTime(0.3, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
         osc.start(t);
-        osc.stop(t + 0.15);
-    });
+        osc.stop(t + 0.11);
+    }
 }
 
-function playDangerSiren() {
+// Critical screech: rising piercing shriek that cuts through everything
+function playDangerScreech() {
     const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(400, ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.35);
-    osc.frequency.linearRampToValueAtTime(400, ctx.currentTime + 0.7);
-    osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 1.05);
-    gain.gain.setValueAtTime(0.35, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.1);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 1.15);
-}
-
-function playDangerRumble() {
-    const ctx = getAudioCtx();
-    [60, 80, 100].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sawtooth';
-        osc.frequency.value = freq;
-        const t = ctx.currentTime + i * 0.05;
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.45, t + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-        osc.start(t);
-        osc.stop(t + 0.65);
-    });
-}
-
-function playDangerAlarm() {
-    const ctx = getAudioCtx();
-    [0, 0.22, 0.44, 0.66].forEach(offset => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'square';
-        osc.frequency.value = offset % 0.44 === 0 ? 660 : 880;
-        const t = ctx.currentTime + offset;
-        gain.gain.setValueAtTime(0.25, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-        osc.start(t);
-        osc.stop(t + 0.2);
-    });
+    // Main screech
+    const osc1  = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(200, ctx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(2400, ctx.currentTime + 0.5);
+    gain1.gain.setValueAtTime(0, ctx.currentTime);
+    gain1.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
+    gain1.gain.setValueAtTime(0.5, ctx.currentTime + 0.45);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.6);
+    // Second shriek
+    const osc2  = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(300, ctx.currentTime + 0.65);
+    osc2.frequency.exponentialRampToValueAtTime(3000, ctx.currentTime + 1.1);
+    gain2.gain.setValueAtTime(0, ctx.currentTime + 0.65);
+    gain2.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 0.7);
+    gain2.gain.setValueAtTime(0.55, ctx.currentTime + 1.05);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.15);
+    osc2.start(ctx.currentTime + 0.65);
+    osc2.stop(ctx.currentTime + 1.2);
 }
 
 function playDangerById(id: DangerSoundId) {
     try {
         switch (id) {
-            case 'descend': return playDangerDescend();
-            case 'rapid':   return playDangerRapid();
-            case 'siren':   return playDangerSiren();
-            case 'rumble':  return playDangerRumble();
-            case 'alarm':   return playDangerAlarm();
+            case 'prison':    return playDangerPrison();
+            case 'firesiren': return playDangerFireSiren();
+            case 'police':    return playDangerPolice();
+            case 'emergency': return playDangerEmergency();
+            case 'screech':   return playDangerScreech();
         }
     } catch (e) {
         console.warn('Danger sound failed:', e);
@@ -480,10 +520,13 @@ const DPToolsAI: React.FC = () => {
     const [dangerSoundId, setDangerSoundId] = useState<DangerSoundId>(() => {
         try {
             const v = localStorage.getItem(LS_DANGER_SND) as DangerSoundId | null;
-            return v && DANGER_SOUNDS.some(s => s.id === v) ? v : 'descend';
-        } catch { return 'descend'; }
+            return v && DANGER_SOUNDS.some(s => s.id === v) ? v : 'prison';
+        } catch { return 'prison'; }
     });
     const dangerSndRef = useRef<DangerSoundId>(dangerSoundId);
+
+    // Stable ref to auto-unlock function so updateMarket (empty deps) can call it
+    const autoUnlockRef = useRef<() => void>(() => {});
 
     const wsRef         = useRef<WebSocket | null>(null);
     const reqMapRef     = useRef<Record<number, string>>({});
@@ -518,6 +561,15 @@ const DPToolsAI: React.FC = () => {
         try { localStorage.setItem(LS_DANGER_SND, dangerSoundId); } catch {}
     }, [dangerSoundId]);
 
+    // Keep autoUnlockRef always pointing at the current setLockedSymbol
+    useEffect(() => {
+        autoUnlockRef.current = () => {
+            lockedSymRef.current = null;
+            setLockedSymbol(null);
+            try { localStorage.removeItem(LS_LOCKED_SYM); } catch {}
+        };
+    });
+
     const initMarkets = useCallback((list: { label: string; value: string }[]) => {
         const init: MarketsMap = {};
         list.forEach(m => {
@@ -543,13 +595,15 @@ const DPToolsAI: React.FC = () => {
         const lastAt  = notifCoolRef.current[symbol] ?? 0;
         const coolOk  = Date.now() - lastAt > coolMs;
 
-        // Danger sound: locked symbol just lost its confirmed signal
+        // Danger sound + auto-unlock: locked symbol just lost its confirmed signal
         if (
             lockedSymRef.current === symbol &&
             prev !== 'NEUTRAL' &&
             current === 'NEUTRAL'
         ) {
             playDangerById(dangerSndRef.current);
+            // Immediately clear the lock so it can never fire again until re-locked
+            autoUnlockRef.current();
         }
 
         // Regular notification: any market gains a confirmed signal
