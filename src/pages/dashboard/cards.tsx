@@ -9,12 +9,12 @@ import Text from '@/components/shared_ui/text';
 import { DBOT_TABS } from '@/constants/bot-contents';
 import { useStore } from '@/hooks/useStore';
 import {
-    DerivLightBotBuilderIcon,
-    DerivLightGoogleDriveIcon,
-    DerivLightLocalDeviceIcon,
-    DerivLightMyComputerIcon,
-    DerivLightQuickStrategyIcon,
-} from '@deriv/quill-icons/Illustration';
+    IllustrativeChartsIcon as DerivLightBotBuilderIcon,
+    SocialGoogleBrandIcon as DerivLightGoogleDriveIcon,
+    IllustrativeComputerIcon as DerivLightLocalDeviceIcon,
+    IllustrativeComputerIcon as DerivLightMyComputerIcon,
+    IllustrativeChartsIcon as DerivLightQuickStrategyIcon,
+} from '@deriv/quill-icons';
 import { Localize, localize } from '@deriv-com/translations';
 import { useDevice } from '@deriv-com/ui';
 import { rudderStackSendOpenEvent } from '../../analytics/rudderstack-common-events';

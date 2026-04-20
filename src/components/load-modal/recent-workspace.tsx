@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { timeSince } from '@/external/bot-skeleton';
 import { save_types } from '@/external/bot-skeleton/constants/save-type';
 import { useStore } from '@/hooks/useStore';
-import { DerivLightGoogleDriveIcon, DerivLightMyComputerIcon } from '@deriv/quill-icons/Illustration';
+import { SocialGoogleBrandIcon as DerivLightGoogleDriveIcon, IllustrativeComputerIcon as DerivLightMyComputerIcon } from '@deriv/quill-icons';
 import { LegacyReportsIcon } from '@deriv/quill-icons/Legacy';
 
 type TRecentWorkspaceProps = {

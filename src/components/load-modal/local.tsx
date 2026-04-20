@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import Button from '@/components/shared_ui/button';
 import { useStore } from '@/hooks/useStore';
-import { DerivLightLocalDeviceIcon, DerivLightMyComputerIcon } from '@deriv/quill-icons/Illustration';
+import { IllustrativeComputerIcon as DerivLightLocalDeviceIcon, IllustrativeComputerIcon as DerivLightMyComputerIcon } from '@deriv/quill-icons';
 import { LegacyClose1pxIcon, LegacyInfo1pxIcon } from '@deriv/quill-icons/Legacy';
 import { Localize, localize } from '@deriv-com/translations';
 import { useDevice } from '@deriv-com/ui';
