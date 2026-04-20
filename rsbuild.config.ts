@@ -106,6 +106,13 @@ export default defineConfig({
                         exclude: /node_modules/,
                         use: 'raw-loader',
                     },
+                    {
+                        test: /\.(js|mjs|cjs)$/,
+                        include: /node_modules\/@deriv-com\/translations/,
+                        resolve: {
+                            fullySpecified: false,
+                        },
+                    },
                 ],
             },
         },
