@@ -1,7 +1,7 @@
 {
-  "name": "Deriv Bot - Automated Trading Platform",
-  "short_name": "Deriv Bot",
-  "description": "Automated trading at your fingertips. No coding needed.",
+  "name": "Win with DBwin",
+  "short_name": "DBwin",
+  "description": "Win with DBwin",
   "start_url": "/?source=mobile",
   "display": "standalone",
   "background_color": "#0e0e0e",
