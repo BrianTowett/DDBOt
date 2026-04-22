@@ -30,6 +30,85 @@
             :root {
                 font-size: 62.5%;
             }
+            /* ── DBwin Splash Loader ───────────────────────────────────────── */
+            #dbwin-splash {
+                position: fixed;
+                inset: 0;
+                background: radial-gradient(ellipse at center, #1b1f3a 0%, #060814 100%);
+                z-index: 999999;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                transition: opacity 0.6s ease;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+            #dbwin-splash.hide {
+                opacity: 0;
+                pointer-events: none;
+            }
+            .dbwin-logo {
+                font-size: 56px;
+                font-weight: 900;
+                letter-spacing: 2px;
+                background: linear-gradient(90deg, #ffd700 0%, #ffaa00 40%, #ff6a00 70%, #ffd700 100%);
+                background-size: 200% auto;
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+                color: transparent;
+                animation: dbwin-shine 2.5s linear infinite, dbwin-pulse 1.6s ease-in-out infinite;
+                text-shadow: 0 0 30px rgba(255, 200, 0, 0.4);
+                z-index: 2;
+            }
+            .dbwin-tagline {
+                margin-top: 14px;
+                font-size: 14px;
+                letter-spacing: 6px;
+                color: #ffd700cc;
+                text-transform: uppercase;
+                z-index: 2;
+                animation: dbwin-pulse 1.6s ease-in-out infinite;
+            }
+            .dbwin-spinner {
+                margin-top: 36px;
+                width: 44px;
+                height: 44px;
+                border: 3px solid rgba(255, 215, 0, 0.15);
+                border-top-color: #ffd700;
+                border-radius: 50%;
+                animation: dbwin-spin 0.9s linear infinite;
+                z-index: 2;
+            }
+            @keyframes dbwin-shine {
+                0%   { background-position: 0% 50%; }
+                100% { background-position: 200% 50%; }
+            }
+            @keyframes dbwin-pulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50%      { transform: scale(1.04); opacity: 0.92; }
+            }
+            @keyframes dbwin-spin {
+                to { transform: rotate(360deg); }
+            }
+            /* Money rain */
+            .money {
+                position: absolute;
+                top: -40px;
+                font-size: 28px;
+                animation: money-fall linear infinite;
+                user-select: none;
+                pointer-events: none;
+                opacity: 0.85;
+                filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+                z-index: 1;
+            }
+            @keyframes money-fall {
+                0%   { transform: translateY(-10vh) rotate(0deg);   opacity: 0; }
+                10%  { opacity: 1; }
+                100% { transform: translateY(110vh) rotate(720deg); opacity: 0.9; }
+            }
         </style>
     </head>
 
@@ -37,6 +116,51 @@
         <div id="modal_root" class="modal-root"></div>
         <div id="popup_root" class="popup-root"></div>
         <div id="root"></div>
+        <!-- DBwin Splash (removed once React mounts) -->
+        <div id="dbwin-splash" aria-hidden="true">
+            <div class="dbwin-logo">DBwin</div>
+            <div class="dbwin-tagline">Win with DBwin</div>
+            <div class="dbwin-spinner"></div>
+        </div>
+        <script>
+            (function () {
+                var splash = document.getElementById('dbwin-splash');
+                if (!splash) return;
+                var symbols = ['💵', '💰', '💸', '🪙', '💴', '💶', '💷'];
+                for (var i = 0; i < 22; i++) {
+                    var s = document.createElement('span');
+                    s.className = 'money';
+                    s.textContent = symbols[i % symbols.length];
+                    s.style.left = Math.random() * 100 + 'vw';
+                    s.style.animationDuration = (3 + Math.random() * 3.5).toFixed(2) + 's';
+                    s.style.animationDelay = (Math.random() * 2.5).toFixed(2) + 's';
+                    s.style.fontSize = (20 + Math.random() * 22).toFixed(0) + 'px';
+                    splash.appendChild(s);
+                }
+                // Auto-hide once React paints (root has children) or after 8s safety
+                var hide = function () {
+                    if (splash.classList.contains('hide')) return;
+                    splash.classList.add('hide');
+                    setTimeout(function () { splash.remove(); }, 700);
+                };
+                var startedAt = Date.now();
+                var MIN_VISIBLE = 900; // show splash for at least this long
+                var check = setInterval(function () {
+                    // Wait for the real app header / main app shell to appear,
+                    // not just the in-app suspense spinner.
+                    var ready = document.querySelector(
+                        '.app-header, header.app, .dashboard__main, .app-contents, .main, [class*="app-content"]'
+                    );
+                    var elapsed = Date.now() - startedAt;
+                    if (ready && elapsed >= MIN_VISIBLE) {
+                        clearInterval(check);
+                        hide();
+                    }
+                }, 120);
+                // Safety: never block the user for more than 10s
+                setTimeout(function () { clearInterval(check); hide(); }, 10000);
+            })();
+        </script>
         <!-- LiveChat script -->
         <script type="text/javascript" defer>
             window.__lc = window.__lc || {};

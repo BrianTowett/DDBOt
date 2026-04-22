@@ -584,6 +584,17 @@ const DPToolsAI: React.FC = () => {
         setMarkets({ ...init });
     }, []);
 
+    // rAF-batched render: coalesce many tick updates into one render per frame
+    const renderScheduledRef = useRef(false);
+    const scheduleRender = useCallback(() => {
+        if (renderScheduledRef.current) return;
+        renderScheduledRef.current = true;
+        requestAnimationFrame(() => {
+            renderScheduledRef.current = false;
+            setMarkets({ ...stateRef.current });
+        });
+    }, []);
+
     const updateMarket = useCallback((symbol: string, updater: (prev: MarketState) => MarketState) => {
         if (!stateRef.current[symbol]) return;
         const next = updater(stateRef.current[symbol]);
@@ -613,8 +624,8 @@ const DPToolsAI: React.FC = () => {
         }
 
         prevSignalsRef.current[symbol] = current;
-        setMarkets({ ...stateRef.current });
-    }, []);
+        scheduleRender();
+    }, [scheduleRender]);
 
     const startScan = useCallback(
         (count: number, list?: { label: string; value: string }[]) => {
@@ -698,9 +709,18 @@ const DPToolsAI: React.FC = () => {
                             });
                         }
 
-                        // Update the market list state
-                        marketListRef.current = discovered;
-                        setMarketList(discovered);
+                        // Merge discovered with fallback so symbols missing from
+                        // active_symbols (e.g. R_250 in some regions) still appear.
+                        const seen = new Set<string>();
+                        const merged: { label: string; value: string }[] = [];
+                        [...discovered, ...FALLBACK_MARKETS].forEach(m => {
+                            if (!seen.has(m.value)) {
+                                seen.add(m.value);
+                                merged.push(m);
+                            }
+                        });
+                        marketListRef.current = merged;
+                        setMarketList(merged);
                     }
                     return;
                 }
