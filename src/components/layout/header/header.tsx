@@ -22,7 +22,6 @@ import AccountSwitcher from './account-switcher';
 import MenuItems from './menu-items';
 import MobileMenu from './mobile-menu';
 import PlatformSwitcher from './platform-switcher';
-import TokenLogin from './token-login';
 import './header.scss';
 
 type TAppHeaderProps = {
@@ -185,7 +184,6 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                     >
                         <Localize i18n_default_text='Sign up' />
                     </Button>
-                    <TokenLogin />
                 </div>
             );
         }
