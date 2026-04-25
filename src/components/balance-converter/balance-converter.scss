@@ -1,0 +1,98 @@
+.balance-converter {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.8rem;
+
+    &__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 3.2rem;
+        padding: 0 1rem;
+        border-radius: 1.6rem;
+        border: 1px solid var(--button-secondary-default, #d6dadb);
+        background: var(--general-main-1, #ffffff);
+        color: var(--text-prominent, #333333);
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition:
+            background 0.15s ease,
+            border-color 0.15s ease,
+            color 0.15s ease;
+
+        &:hover {
+            background: var(--general-section-1, #f2f3f4);
+            border-color: var(--brand-secondary, #ff444f);
+            color: var(--brand-secondary, #ff444f);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--brand-secondary, #ff444f);
+            outline-offset: 2px;
+        }
+
+        &-icon {
+            display: inline-block;
+            line-height: 1;
+        }
+    }
+
+    &__popup {
+        position: absolute;
+        top: calc(100% + 0.8rem);
+        right: 0;
+        z-index: 100;
+        min-width: 22rem;
+        background: var(--general-main-1, #ffffff);
+        color: var(--text-prominent, #333333);
+        border: 1px solid var(--general-section-2, #e6e9e9);
+        border-radius: 0.8rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        padding: 1.2rem 1.4rem;
+    }
+
+    &__popup-header {
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-less-prominent, #999999);
+        margin-bottom: 0.6rem;
+    }
+
+    &__popup-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    &__amount {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-prominent, #333333);
+    }
+
+    &__rate {
+        font-size: 1.1rem;
+        color: var(--text-less-prominent, #999999);
+    }
+
+    &__note {
+        font-size: 1rem;
+        color: var(--text-less-prominent, #999999);
+        font-style: italic;
+        margin-top: 0.2rem;
+    }
+
+    &__msg {
+        font-size: 1.2rem;
+        color: var(--text-less-prominent, #999999);
+
+        &--error {
+            color: var(--status-danger, #cc2e3d);
+        }
+    }
+}

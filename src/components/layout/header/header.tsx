@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
+import BalanceConverter from '@/components/balance-converter/balance-converter';
 import PWAInstallButton from '@/components/pwa-install-button';
 import { generateOAuthURL, standalone_routes } from '@/components/shared';
 import Button from '@/components/shared_ui/button';
@@ -94,6 +95,8 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                                 {localize('Deposit')}
                             </Button>
                         ))}
+
+                    <BalanceConverter />
 
                     <AccountSwitcher activeAccount={activeAccount} />
 
