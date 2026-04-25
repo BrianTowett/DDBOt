@@ -1,0 +1,51 @@
+2026-04-25T15:33:26.530087Z	Cloning repository...
+2026-04-25T15:33:28.519257Z	From https://github.com/BrianTowett/DDBOt
+2026-04-25T15:33:28.519777Z	 * branch            3bfeb76f81cf2fa07bd28da3401165c6e76e77b9 -> FETCH_HEAD
+2026-04-25T15:33:28.519873Z	
+2026-04-25T15:33:28.827997Z	HEAD is now at 3bfeb76 Update redirect path to correctly land users on the dashboard
+2026-04-25T15:33:28.828847Z	
+2026-04-25T15:33:28.899719Z	
+2026-04-25T15:33:28.900353Z	Using v2 root directory strategy
+2026-04-25T15:33:28.921896Z	Success: Finished cloning repository files
+2026-04-25T15:33:30.446627Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-04-25T15:33:30.4472Z	
+2026-04-25T15:33:31.549071Z	No Wrangler configuration file found. Continuing.
+2026-04-25T15:33:31.7928Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2026-04-25T15:33:31.793244Z	Installing project dependencies: npm clean-install --progress=false
+2026-04-25T15:33:35.41682Z	npm error code ERESOLVE
+2026-04-25T15:33:35.417581Z	npm error ERESOLVE could not resolve
+2026-04-25T15:33:35.417684Z	npm error
+2026-04-25T15:33:35.417729Z	npm error While resolving: css-loader@7.1.2
+2026-04-25T15:33:35.41776Z	npm error Found: @rspack/core@2.0.0
+2026-04-25T15:33:35.417788Z	npm error node_modules/@rspack/core
+2026-04-25T15:33:35.417824Z	npm error   @rspack/core@"^2.0.0" from the root project
+2026-04-25T15:33:35.41787Z	npm error   peerOptional @rspack/core@"^2.0.0-0" from @rspack/plugin-react-refresh@2.0.0
+2026-04-25T15:33:35.417907Z	npm error   node_modules/@rspack/plugin-react-refresh
+2026-04-25T15:33:35.417942Z	npm error     @rspack/plugin-react-refresh@"^2.0.0" from the root project
+2026-04-25T15:33:35.418022Z	npm error
+2026-04-25T15:33:35.418074Z	npm error Could not resolve dependency:
+2026-04-25T15:33:35.418116Z	npm error peerOptional @rspack/core@"0.x || 1.x" from css-loader@7.1.2
+2026-04-25T15:33:35.418178Z	npm error node_modules/css-loader
+2026-04-25T15:33:35.418228Z	npm error   dev css-loader@"^7.1.2" from the root project
+2026-04-25T15:33:35.418272Z	npm error
+2026-04-25T15:33:35.418316Z	npm error Conflicting peer dependency: @rspack/core@1.7.11
+2026-04-25T15:33:35.418359Z	npm error node_modules/@rspack/core
+2026-04-25T15:33:35.418403Z	npm error   peerOptional @rspack/core@"0.x || 1.x" from css-loader@7.1.2
+2026-04-25T15:33:35.418442Z	npm error   node_modules/css-loader
+2026-04-25T15:33:35.418482Z	npm error     dev css-loader@"^7.1.2" from the root project
+2026-04-25T15:33:35.418532Z	npm error
+2026-04-25T15:33:35.41858Z	npm error Fix the upstream dependency conflict, or retry
+2026-04-25T15:33:35.418616Z	npm error this command with --force or --legacy-peer-deps
+2026-04-25T15:33:35.418654Z	npm error to accept an incorrect (and potentially broken) dependency resolution.
+2026-04-25T15:33:35.418694Z	npm error
+2026-04-25T15:33:35.418735Z	npm error
+2026-04-25T15:33:35.418779Z	npm error For a full report see:
+2026-04-25T15:33:35.418823Z	npm error /opt/buildhome/.npm/_logs/2026-04-25T15_33_32_288Z-eresolve-report.txt
+2026-04-25T15:33:35.418878Z	npm error A complete log of this run can be found in: /opt/buildhome/.npm/_logs/2026-04-25T15_33_32_288Z-debug-0.log
+2026-04-25T15:33:35.479256Z	Error: Exit with error code: 1
+2026-04-25T15:33:35.479616Z	    at ChildProcess.<anonymous> (/snapshot/dist/run-build.js)
+2026-04-25T15:33:35.479685Z	    at Object.onceWrapper (node:events:652:26)
+2026-04-25T15:33:35.479821Z	    at ChildProcess.emit (node:events:537:28)
+2026-04-25T15:33:35.479872Z	    at ChildProcess._handle.onexit (node:internal/child_process:291:12)
+2026-04-25T15:33:35.488438Z	Failed: build command exited with code: 1
+2026-04-25T15:33:36.036Z	Failed: error occurred while running build command
