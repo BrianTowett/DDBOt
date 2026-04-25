@@ -32,6 +32,10 @@
         "@deriv/deriv-charts": "^2.10.0",
         "@deriv/js-interpreter": "^3.0.0",
         "@deriv/quill-icons": "^2.4.18",
+        "@rspack/binding": "^2.0.0",
+        "@rspack/core": "^2.0.0",
+        "@rspack/lite-tapable": "^1.1.0",
+        "@rspack/plugin-react-refresh": "^2.0.0",
         "@svgr/core": "^8.1.0",
         "@tanstack/react-query": "^5.99.2",
         "@types/node": "^25.6.0",
@@ -160,7 +164,7 @@
         "webpack-dev-server": "^5.1.0"
     },
     "optionalDependencies": {
-        "@rspack/binding-linux-x64-gnu": "1.0.14",
+        "@rspack/binding-linux-x64-gnu": "^1.0.14",
         "sass-embedded-android-arm": "1.85.1",
         "sass-embedded-android-arm64": "1.85.1",
         "sass-embedded-android-ia32": "1.85.1",
