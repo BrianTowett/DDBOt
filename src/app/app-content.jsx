@@ -37,6 +37,17 @@ const AppContent = observer(() => {
     const [is_loading, setIsLoading] = React.useState(true);
     const [is_eu_error_loading, setIsEuErrorLoading] = React.useState(true);
     const [offline_timeout, setOfflineTimeout] = React.useState(null);
+    // Once a hard deadline has been reached we always render the dashboard,
+    // even if `is_loading` is later flipped back to true by an effect that
+    // depends on `is_api_initialized`. Prevents the user from being trapped
+    // on the spinner when the Deriv WebSocket can't connect (proxy / CSP /
+    // network issue). Initialize from a global flag so a remount preserves
+    // the bypass if the deadline already fired.
+    const [forced_done, setForcedDone] = React.useState(
+        () => typeof window !== 'undefined' && window.__dbwin_force_done === true
+    );
+    // eslint-disable-next-line no-console
+    console.log('[AppContent] render', { is_loading, is_api_initialized, is_eu_error_loading, forced_done });
     const store = useStore();
     const { app, transactions, common, client } = store;
     const { showDigitalOptionsMaltainvestError } = app;
@@ -81,6 +92,36 @@ const AppContent = observer(() => {
             common.setSocketOpened(false);
         }
     }, [common, connectionStatus, offline_timeout]);
+
+    // Hard deadline: even if the Deriv WebSocket never opens (blocked by a
+    // proxy, CSP, network, etc.) we still want to surface the dashboard so
+    // the user isn't stuck on a spinner forever. After 4 seconds we flip
+    // `forced_done`, which short-circuits the `is_loading` check below.
+    // We deliberately do NOT touch `is_api_initialized` here — flipping that
+    // would re-trigger the existing effect that calls `retrieveActiveSymbols`
+    // and re-sets `is_loading` to true (the original code path that hung).
+    useEffect(() => {
+        const flush = (source) => {
+            console.warn(
+                `[AppContent] Hard deadline reached (${source}) — rendering dashboard even though Deriv API has not initialized.`
+            );
+            if (typeof window !== 'undefined') window.__dbwin_force_done = true;
+            setForcedDone(true);
+        };
+        const t = setTimeout(() => flush('4s timer'), 4000);
+        const onForce = () => flush('event');
+        window.addEventListener('dbwin:force-done', onForce);
+        // If the global flag was already set before this component mounted,
+        // flush immediately on the next tick so the early-return triggers.
+        if (typeof window !== 'undefined' && window.__dbwin_force_done) {
+            queueMicrotask(() => flush('mount-flag'));
+        }
+        return () => {
+            clearTimeout(t);
+            window.removeEventListener('dbwin:force-done', onForce);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Handle offline scenarios - don't wait indefinitely for API
     useEffect(() => {
@@ -278,14 +319,39 @@ const AppContent = observer(() => {
         return localize('Initializing Deriv Bot account...');
     };
 
-    // Skip loading entirely when offline - show dashboard directly
-    if (!isOnline) {
-        console.log('[Offline] Bypassing loader, showing dashboard directly');
+    // Skip loading entirely when offline OR after the hard deadline - show
+    // dashboard directly so the user is never stuck on a spinner.
+    if (!isOnline || forced_done) {
+        // eslint-disable-next-line no-console
+        console.warn('[AppContent] Rendering dashboard via early-return path', { isOnline, forced_done });
+        if (!isOnline) console.log('[Offline] Bypassing loader, showing dashboard directly');
         return (
             <AuthLoadingWrapper>
                 <ThemeProvider theme={is_dark_mode_on ? 'dark' : 'light'}>
                     <BlocklyLoading />
-                    <div className='bot-dashboard bot' data-testid='dt_bot_dashboard'>
+                    <div
+                        id='dbwin-debug-banner'
+                        style={{
+                            position: 'fixed',
+                            top: 50,
+                            left: 0,
+                            right: 0,
+                            zIndex: 999999,
+                            background: '#16a34a',
+                            color: '#fff',
+                            padding: '6px 12px',
+                            fontSize: 12,
+                            fontFamily: 'monospace',
+                            textAlign: 'center',
+                        }}
+                    >
+                        DBWIN: AppContent painted (forced_done={String(forced_done)}, isOnline={String(isOnline)})
+                    </div>
+                    <div
+                        className='bot-dashboard bot'
+                        data-testid='dt_bot_dashboard'
+                        data-render-source='forced-done'
+                    >
                         {/* <PWAInstallModalTest /> */}
                         <Audio />
                         <Main />

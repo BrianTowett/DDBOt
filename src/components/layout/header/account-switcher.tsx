@@ -164,7 +164,7 @@ const AccountSwitcher = observer(({ activeAccount }: TAccountSwitcher) => {
     return (
         activeAccount &&
         (has_wallet ? (
-            <Suspense fallback={<Loader />}>
+            <Suspense fallback={<Loader isFullScreen={false} />}>
                 <AccountInfoWallets is_dialog_on={is_accounts_switcher_on} toggleDialog={toggleAccountsDialog} />
             </Suspense>
         ) : (

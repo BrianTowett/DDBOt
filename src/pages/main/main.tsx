@@ -116,8 +116,16 @@ const AppWrapper = observer(() => {
                 threshold: 0.5, // set offset 0.1 means trigger if atleast 10% of element in viewport
             }
         );
-        observer_dashboard.observe(el_dashboard);
-        observer_tutorial.observe(el_tutorial);
+        // `observe()` throws synchronously when given null. The target elements
+        // may not exist on first render (e.g. before the Tabs panel mounts),
+        // which would crash the entire dashboard render path. Guard each call.
+        if (el_dashboard) observer_dashboard.observe(el_dashboard);
+        if (el_tutorial) observer_tutorial.observe(el_tutorial);
+
+        return () => {
+            observer_dashboard.disconnect();
+            observer_tutorial.disconnect();
+        };
     });
 
     React.useEffect(() => {

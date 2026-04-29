@@ -119,6 +119,22 @@ const AppRoot = () => {
 
     return (
         <Suspense fallback={<AppRootLoader />}>
+            <div
+                id='dbwin-approot-marker'
+                style={{
+                    position: 'fixed',
+                    top: 50,
+                    left: 0,
+                    zIndex: 999998,
+                    background: '#2563eb',
+                    color: '#fff',
+                    padding: '4px 8px',
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                }}
+            >
+                AppRoot mounted (api={String(is_api_initialized)}, hard={String(hard_deadline_reached)})
+            </div>
             <ErrorBoundary root_store={store}>
                 <ErrorComponentWrapper />
                 <AppContent />

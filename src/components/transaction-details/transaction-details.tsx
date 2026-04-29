@@ -7,7 +7,7 @@ import TransactionDetailsMobile from './transaction-details-mobile';
 export const TransactionDetails = observer(() => {
     const { isDesktop } = useDevice();
     return (
-        <Suspense fallback={<Loader />}>
+        <Suspense fallback={<Loader isFullScreen={false} />}>
             {!isDesktop ? <TransactionDetailsMobile /> : <TransactionDetailsDesktop />}
         </Suspense>
     );

@@ -273,6 +273,39 @@
                     console.log('[HTML] Message from service worker:', event.data);
                 });
             }
+
+            // === DOM diagnostic poller (debug-only) ===
+            // Periodically reports what is actually mounted in the page so we
+            // can debug "stuck on spinner" without a real browser inspector.
+            (function () {
+                var ticks = 0;
+                var lastSig = '';
+                var iv = setInterval(function () {
+                    ticks++;
+                    var root = document.getElementById('root');
+                    var rootChildren = root ? root.children.length : -1;
+                    var dashboard = document.querySelector('[data-testid="dt_bot_dashboard"]');
+                    var debugBanner = document.getElementById('dbwin-debug-banner');
+                    var blocklyLoader = document.querySelector('[data-testid="blockly-loader"]');
+                    var loaders = document.querySelectorAll('.dc-loading, .derivs-loader, [class*="loader"], [class*="Loader"]');
+                    var loaderClasses = [];
+                    for (var i = 0; i < loaders.length && i < 10; i++) {
+                        loaderClasses.push(loaders[i].className || loaders[i].tagName);
+                    }
+                    var sig = JSON.stringify({
+                        rootChildren: rootChildren,
+                        dashboard: !!dashboard,
+                        debugBanner: !!debugBanner,
+                        blocklyLoader: !!blocklyLoader,
+                        loaders: loaderClasses,
+                    });
+                    if (sig !== lastSig) {
+                        lastSig = sig;
+                        console.log('[DOM-POLL]', ticks + 's', sig);
+                    }
+                    if (ticks >= 30) clearInterval(iv);
+                }, 1000);
+            })();
         </script>
     </body>
 </html>

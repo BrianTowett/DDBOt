@@ -95,6 +95,35 @@ try {
     console.warn('Unable to set Deriv app ID override', e);
 }
 
+// Hard external safety net: if React has rendered something but AppContent is
+// still spinning after 5s (e.g. because Deriv WebSocket is blocked here), set
+// a global flag that AppContent reads on the next render to bypass its
+// internal `is_loading` check and show the dashboard anyway.
+declare global {
+    interface Window {
+        __dbwin_force_done?: boolean;
+    }
+}
+setTimeout(() => {
+    if (window.__dbwin_force_done) return;
+    window.__dbwin_force_done = true;
+    // eslint-disable-next-line no-console
+    console.warn('[main] External 5s safety reached — forcing AppContent past loader.');
+    // Nudge React to re-render observers by dispatching a no-op event that
+    // AppContent listens for, then fall back to a window resize event which
+    // most layouts already listen for.
+    try {
+        window.dispatchEvent(new Event('dbwin:force-done'));
+    } catch (e) {
+        /* noop */
+    }
+    try {
+        window.dispatchEvent(new Event('resize'));
+    } catch (e) {
+        /* noop */
+    }
+}, 5000);
+
 AnalyticsInitializer();
 registerPWA()
     .then(registration => {

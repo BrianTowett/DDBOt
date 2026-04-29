@@ -94,6 +94,11 @@ export default defineConfig({
     },
     dev: {
         hmr: true,
+        // Disable lazy compilation so chunks are always built up-front. With
+        // lazy compilation enabled, edits to lazy-loaded modules (like
+        // `AppContent`) sometimes don't propagate — the browser keeps loading
+        // a stale chunk that was compiled before the edit.
+        lazyCompilation: false,
     },
     tools: {
         rspack: {
