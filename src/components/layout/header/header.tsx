@@ -11,9 +11,8 @@ import { useFirebaseCountriesConfig } from '@/hooks/firebase/useFirebaseCountrie
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
-import { clearAuthData, handleOidcAuthFailure } from '@/utils/auth-utils';
+import { clearAuthData } from '@/utils/auth-utils';
 import { StandaloneCircleUserRegularIcon } from '@deriv/quill-icons/Standalone';
-import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import { Localize, useTranslations } from '@deriv-com/translations';
 import { Header, useDevice, Wrapper } from '@deriv-com/ui';
 import { Tooltip } from '@deriv-com/ui';
@@ -148,29 +147,12 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                                 currency || sessionStorage.getItem('query_param_currency') || 'USD';
 
                             try {
-                                // First, explicitly wait for TMB status to be determined
-                                const tmbEnabled = await isTmbEnabled();
-                                // Now use the result of the explicit check
-                                if (tmbEnabled) {
-                                    await onRenderTMBCheck(true); // Pass true to indicate it's from login button
-                                } else {
-                                    // Always use OIDC if TMB is not enabled
-                                    try {
-                                        await requestOidcAuthentication({
-                                            redirectCallbackUri: `${window.location.origin}/callback`,
-                                            ...(query_param_currency
-                                                ? {
-                                                      state: {
-                                                          account: query_param_currency,
-                                                      },
-                                                  }
-                                                : {}),
-                                        });
-                                    } catch (err) {
-                                        handleOidcAuthFailure(err);
-                                        window.location.replace(generateOAuthURL());
-                                    }
-                                }
+                                // The dbwinV2 Deriv app is registered as an OAuth (legacy) app
+                                // with redirect URL https://ddbot.pages.dev — use the OAuth flow
+                                // directly so tokens come back as ?acct1=&token1= on the root URL,
+                                // which AuthWrapper.tsx already handles. This avoids OIDC redirect_uri
+                                // mismatch errors with Deriv.
+                                window.location.replace(generateOAuthURL());
                             } catch (error) {
                                 // eslint-disable-next-line no-console
                                 console.error(error);
