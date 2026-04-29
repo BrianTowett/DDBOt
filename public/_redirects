@@ -1,0 +1,3 @@
+# Cloudflare Pages SPA fallback
+# Serve index.html for any non-asset path so React Router can take over
+/*    /index.html   200

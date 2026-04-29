@@ -43,7 +43,18 @@ class PWAManager {
     }
 
     /**
-     * Register service worker (for all devices to enable offline functionality)
+     * Register service worker.
+     *
+     * NOTE: PWA service worker registration is currently DISABLED. The
+     * previous worker precached `/index.html` and intercepted navigation
+     * requests, which on Cloudflare Pages caused returning users to be
+     * served stale HTML referencing JS chunks that no longer existed —
+     * resulting in an indefinite white-screen / splash-spinner state.
+     *
+     * Instead, we still load `/sw.js` (now a kill-switch worker) for users
+     * that already have a service worker installed, so it can clean up old
+     * caches and unregister itself. Brand-new visitors don't get a worker
+     * at all.
      */
     async registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
         if (!('serviceWorker' in navigator)) {
@@ -51,20 +62,17 @@ class PWAManager {
             return null;
         }
 
-        // Only enable PWA service workers on Chrome browsers
-        const isChrome = /Chrome/.test(navigator.userAgent) && !isFirefox() && !isSafari();
-        if (!isChrome) {
-            const browser = isFirefox() ? 'Firefox' : isSafari() ? 'Safari' : 'Unknown';
-            console.log(
-                `[PWA] Service worker disabled on ${browser} - PWA only supported on Chrome to prevent chunk loading and login issues`
-            );
-            return null;
-        }
-
-        // Register service worker for Chrome only
-        console.log('[PWA] Registering service worker for Chrome browser offline capabilities');
-
         try {
+            const existing = await navigator.serviceWorker.getRegistrations();
+            if (existing.length === 0) {
+                console.log('[PWA] No existing service worker — registration is disabled, skipping.');
+                return null;
+            }
+
+            console.log(
+                `[PWA] Found ${existing.length} existing service worker(s) — registering kill-switch to clean them up.`
+            );
+
             const registration = await navigator.serviceWorker.register('/sw.js', {
                 scope: '/',
             });

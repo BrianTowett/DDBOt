@@ -144,21 +144,44 @@
                     setTimeout(function () { splash.remove(); }, 700);
                 };
                 var startedAt = Date.now();
-                var MIN_VISIBLE = 900; // show splash for at least this long
+                var MIN_VISIBLE = 600; // show splash for at least this long
+                var root = document.getElementById('root');
                 var check = setInterval(function () {
-                    // Wait for the real app header / main app shell to appear,
-                    // not just the in-app suspense spinner.
-                    var ready = document.querySelector(
-                        '.app-header, header.app, .dashboard__main, .app-contents, .main, [class*="app-content"]'
-                    );
+                    // Hide as soon as React has rendered ANYTHING into #root
+                    // (the in-app loader, the dashboard, an error boundary, etc).
+                    // Hanging the splash on a specific app-shell class meant
+                    // that any time React was still mounting its initial loader
+                    // the splash would sit on top of it for the entire 10s
+                    // safety timeout — which on slow / production builds
+                    // looked like an indefinite white screen with a spinner.
+                    var rendered = root && root.children && root.children.length > 0;
                     var elapsed = Date.now() - startedAt;
-                    if (ready && elapsed >= MIN_VISIBLE) {
+                    if (rendered && elapsed >= MIN_VISIBLE) {
                         clearInterval(check);
                         hide();
                     }
-                }, 120);
-                // Safety: never block the user for more than 10s
-                setTimeout(function () { clearInterval(check); hide(); }, 10000);
+                }, 100);
+                // Safety: never block the user for more than 5s. If React
+                // failed to mount we want the user to at least see a blank
+                // page (and any error boundary / console output) rather than
+                // a forever-spinning splash that hides the real state.
+                setTimeout(function () { clearInterval(check); hide(); }, 5000);
+                // Listen for an explicit signal from the app in case the
+                // splash check is racing the first paint.
+                window.addEventListener('app-ready', function () {
+                    clearInterval(check);
+                    hide();
+                });
+                // If the app fails to load any chunk, also hide the splash
+                // immediately so the user can see the error rather than a
+                // spinner that never goes away.
+                window.addEventListener('error', function (e) {
+                    var msg = e && e.message ? String(e.message) : '';
+                    if (msg.indexOf('Loading chunk') !== -1 || msg.indexOf('ChunkLoadError') !== -1) {
+                        clearInterval(check);
+                        hide();
+                    }
+                });
             })();
         </script>
         <!-- LiveChat script -->

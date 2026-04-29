@@ -113,3 +113,13 @@ Preferred communication style: Simple, everyday language.
   2. Added a 3s "hard deadline" that forces the app to render even if `api_base.init()` is still pending
   3. Store gate kept (without store there's nothing to render)
 - Worst-case path to interactive: ~3 seconds, regardless of network conditions
+
+### Cloudflare Pages White-Screen / Splash Hang Fix (April 2026)
+
+Returning users on Cloudflare Pages saw the gold "DBwin" splash with money rain spin forever. Multiple causes:
+
+- **Service worker poisoning** — `public/sw.js` precached `/` and `/index.html` and intercepted navigation requests. After every redeploy, the cached HTML still referenced JS chunks with old content hashes that no longer existed on the CDN, so React never mounted. Replaced `public/sw.js` with a kill-switch worker that on activate clears all caches, calls `registration.unregister()`, and reloads controlled tabs. New visitors don't get a worker at all (`registerServiceWorker` in `src/utils/pwa-utils.ts` only registers when an existing one is found, purely so the kill-switch can run).
+- **Splash never hid** — the inline splash in `index.html` waited for very specific class names (`.app-header`, `.dashboard__main`, etc.) that don't exist while the in-app `<ChunkLoader>` is showing, so the splash sat for the full 10s safety. Now hides the moment `#root` has any children, listens for an explicit `app-ready` event dispatched from `src/main.tsx`, and the safety is shortened to 5s. Also bails out immediately on `ChunkLoadError`.
+- **No SPA fallback** — added `public/_redirects` (`/* /index.html 200`) so direct route hits and reloads on Cloudflare Pages serve `index.html` instead of returning 404.
+- **Top-level error boundary + global error logging** added in `src/main.tsx` (`RootErrorBoundary` plus `error` / `unhandledrejection` listeners) so any future crash renders a visible error UI instead of just a white screen.
+- **Node version pinned** to 20.20.0 via `.node-version` and `.nvmrc` for the CF Pages build.
