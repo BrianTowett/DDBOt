@@ -322,31 +322,11 @@ const AppContent = observer(() => {
     // Skip loading entirely when offline OR after the hard deadline - show
     // dashboard directly so the user is never stuck on a spinner.
     if (!isOnline || forced_done) {
-        // eslint-disable-next-line no-console
-        console.warn('[AppContent] Rendering dashboard via early-return path', { isOnline, forced_done });
         if (!isOnline) console.log('[Offline] Bypassing loader, showing dashboard directly');
         return (
             <AuthLoadingWrapper>
                 <ThemeProvider theme={is_dark_mode_on ? 'dark' : 'light'}>
                     <BlocklyLoading />
-                    <div
-                        id='dbwin-debug-banner'
-                        style={{
-                            position: 'fixed',
-                            top: 50,
-                            left: 0,
-                            right: 0,
-                            zIndex: 999999,
-                            background: '#16a34a',
-                            color: '#fff',
-                            padding: '6px 12px',
-                            fontSize: 12,
-                            fontFamily: 'monospace',
-                            textAlign: 'center',
-                        }}
-                    >
-                        DBWIN: AppContent painted (forced_done={String(forced_done)}, isOnline={String(isOnline)})
-                    </div>
                     <div
                         className='bot-dashboard bot'
                         data-testid='dt_bot_dashboard'
