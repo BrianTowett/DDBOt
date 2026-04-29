@@ -103,3 +103,13 @@ Preferred communication style: Simple, everyday language.
 - Responsive card design with hover effects and loading states
 - Bot XML files stored in `/public/bots/` directory
 - Files: `src/pages/free-bots/index.tsx`, `src/pages/free-bots/free-bots.scss`
+
+### App Loading Bulletproof Fix (April 2026)
+
+- Fixed body stuck on `AppRootLoader` spinner forever on `https://ddbot.pages.dev/`
+- Root cause: `AppRoot` awaited `isTmbEnabled()` (Firebase config fetch) without a timeout. When that network call hung, `setIsTmbCheckComplete(true)` was never called, so the API init effect (which has its own 5s safety) never even started. Body stayed on spinner indefinitely.
+- Fix in `src/app/app-root.tsx`:
+  1. TMB check now has its own 2s safety timeout that forces `is_tmb_check_complete=true`
+  2. Added a 3s "hard deadline" that forces the app to render even if `api_base.init()` is still pending
+  3. Store gate kept (without store there's nothing to render)
+- Worst-case path to interactive: ~3 seconds, regardless of network conditions

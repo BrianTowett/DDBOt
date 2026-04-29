@@ -40,25 +40,44 @@ const AppRoot = () => {
     const [is_api_initialized, setIsApiInitialized] = useState(false);
     const [is_tmb_check_complete, setIsTmbCheckComplete] = useState(false);
     const [, setIsTmbEnabled] = useState(false);
+    const [hard_deadline_reached, setHardDeadlineReached] = useState(false);
     const { isTmbEnabled } = useTMB();
+
+    // Hard deadline: regardless of any async init, show the app within 3 seconds.
+    useEffect(() => {
+        const t = setTimeout(() => setHardDeadlineReached(true), 3000);
+        return () => clearTimeout(t);
+    }, []);
 
     // Effect to check TMB status - independent of API initialization
     useEffect(() => {
+        let settled = false;
+        const safety = setTimeout(() => {
+            if (!settled) {
+                settled = true;
+                setIsTmbCheckComplete(true);
+            }
+        }, 2000);
+
         const checkTmbStatus = async () => {
             try {
                 const tmb_status = await isTmbEnabled();
                 const final_status = tmb_status || window.is_tmb_enabled === true;
 
                 setIsTmbEnabled(final_status);
-
-                setIsTmbCheckComplete(true);
             } catch (error) {
                 console.error('TMB check failed:', error);
-                setIsTmbCheckComplete(true);
+            } finally {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(safety);
+                    setIsTmbCheckComplete(true);
+                }
             }
         };
 
         checkTmbStatus();
+        return () => clearTimeout(safety);
     }, []);
 
     // Initialize API when TMB check is complete with timeout fallback
@@ -92,7 +111,11 @@ const AppRoot = () => {
         return () => clearTimeout(timeoutId);
     }, [is_tmb_check_complete]);
 
-    if (!store || !is_api_initialized) return <AppRootLoader />;
+    // Wait for store to be available; otherwise after the hard deadline, render the app
+    // even if the optional API/TMB init is still pending. This guarantees the body
+    // never gets stuck on the loader if a network call (Firebase config, WebSocket) hangs.
+    if (!store) return <AppRootLoader />;
+    if (!is_api_initialized && !hard_deadline_reached) return <AppRootLoader />;
 
     return (
         <Suspense fallback={<AppRootLoader />}>
