@@ -38,9 +38,13 @@ export const loginUrl = ({ language }: TLoginUrl) => {
         let oauth_domain = deriv_urls.DERIV_HOST_NAME;
 
         if (current_domain) {
-            // Extract domain suffix (e.g., 'deriv.me' from 'dbot.deriv.me')
             const domain_suffix = current_domain.replace(/^[^.]+\./, '');
-            oauth_domain = domain_suffix;
+            // Only use the host's suffix if it's actually a Deriv-owned host
+            // (e.g. deriv.com / deriv.be / deriv.me). For 3rd-party hosts like
+            // ddbot.pages.dev we MUST keep oauth.deriv.com.
+            if (/^deriv\.(com|be|me)$/i.test(domain_suffix)) {
+                oauth_domain = domain_suffix;
+            }
         }
 
         const url = `https://oauth.${oauth_domain}/oauth2/authorize?app_id=${getAppId()}&l=${language}${marketing_queries}&brand=${website_name.toLowerCase()}`;

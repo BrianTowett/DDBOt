@@ -25,6 +25,7 @@ export const domain_app_ids = {
     'dbot.deriv.com': APP_IDS.PRODUCTION,
     'dbot.deriv.be': APP_IDS.PRODUCTION_BE,
     'dbot.deriv.me': APP_IDS.PRODUCTION_ME,
+    'ddbot.pages.dev': 66860,
 };
 
 export const getCurrentProductionDomain = () =>
