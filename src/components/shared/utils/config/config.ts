@@ -185,8 +185,18 @@ export const generateOAuthURL = () => {
     // 3) Pick app_id. Domain-based; never silently random.
     const app_id = getAppId();
 
-    // 4) Build canonical URL. brand is always 'deriv'.
-    const final_url = `https://${oauth_host}/oauth2/authorize?app_id=${app_id}&l=EN&brand=deriv`;
+    // 4) Pick redirect URI. Use the app's own origin so Deriv has zero
+    //    ambiguity about where to send the user back after authorise. This
+    //    must EXACTLY match a Redirect URL registered on the Deriv app.
+    const redirect_uri = `${window.location.protocol}//${window.location.host}`;
+
+    // 5) Build canonical URL. brand is always 'deriv'.
+    const final_url =
+        `https://${oauth_host}/oauth2/authorize` +
+        `?app_id=${encodeURIComponent(String(app_id))}` +
+        `&l=EN` +
+        `&brand=deriv` +
+        `&redirect_uri=${encodeURIComponent(redirect_uri)}`;
 
     try {
         // Debug — leave on so production issues are easy to diagnose from devtools.
