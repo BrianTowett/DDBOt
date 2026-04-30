@@ -82,9 +82,10 @@ export const getDefaultAppIdAndUrl = () => {
 };
 
 export const getAppId = () => {
-    let app_id = null;
+    let app_id: string | number | null = null;
     const config_app_id = window.localStorage.getItem('config.app_id');
     const current_domain = getCurrentProductionDomain() ?? '';
+    const hostname = (typeof window !== 'undefined' && window.location.hostname) || '';
 
     if (config_app_id) {
         app_id = config_app_id;
@@ -92,8 +93,18 @@ export const getAppId = () => {
         app_id = APP_IDS.STAGING;
     } else if (isTestLink()) {
         app_id = APP_IDS.LOCALHOST;
+    } else if (current_domain && domain_app_ids[current_domain as keyof typeof domain_app_ids]) {
+        app_id = domain_app_ids[current_domain as keyof typeof domain_app_ids];
     } else {
-        app_id = domain_app_ids[current_domain as keyof typeof domain_app_ids] ?? APP_IDS.PRODUCTION;
+        // No mapping for this hostname. Warn loudly instead of silently using
+        // an unrelated fallback. Still return PRODUCTION so the app boots.
+        // eslint-disable-next-line no-console
+        console.warn(
+            `[AppID] No domain_app_ids mapping for hostname "${hostname}". ` +
+                `Falling back to APP_IDS.PRODUCTION (${APP_IDS.PRODUCTION}). ` +
+                `Add this hostname to domain_app_ids in config.ts to fix.`
+        );
+        app_id = APP_IDS.PRODUCTION;
     }
 
     return app_id;
@@ -146,38 +157,56 @@ export const getDebugServiceWorker = () => {
 };
 
 export const generateOAuthURL = () => {
-    const { getOauthURL } = URLUtils;
-    const oauth_url = getOauthURL();
-    const original_url = new URL(oauth_url);
     const hostname = window.location.hostname;
 
-    // First priority: Check for configured server URLs (for QA/testing environments)
+    // 1) Pick OAuth host. ONLY use deriv.me / deriv.be hosts when the page itself
+    //    is on a Deriv-owned .me / .be domain. For EVERY other host (including
+    //    ddbot.pages.dev, *.pages.dev, *.replit.dev, localhost, etc.) we ALWAYS
+    //    fall back to oauth.deriv.com. We never strip a non-Deriv subdomain.
+    let oauth_host = 'oauth.deriv.com';
+    if (/(^|\.)deriv\.me$/i.test(hostname)) {
+        oauth_host = 'oauth.deriv.me';
+    } else if (/(^|\.)deriv\.be$/i.test(hostname)) {
+        oauth_host = 'oauth.deriv.be';
+    }
+
+    // 2) Honour QA/configured server overrides if explicitly set.
     const configured_server_url = (LocalStorageUtils.getValue(LocalStorageConstants.configServerURL) ||
         localStorage.getItem('config.server_url')) as string;
-
     const valid_server_urls = ['green.derivws.com', 'red.derivws.com', 'blue.derivws.com', 'canary.derivws.com'];
-
     if (
         configured_server_url &&
-        (typeof configured_server_url === 'string'
-            ? !valid_server_urls.includes(configured_server_url)
-            : !valid_server_urls.includes(JSON.stringify(configured_server_url)))
+        typeof configured_server_url === 'string' &&
+        !valid_server_urls.includes(configured_server_url)
     ) {
-        original_url.hostname = configured_server_url;
-    } else if (original_url.hostname.includes('oauth.deriv.')) {
-        // Second priority: Domain-based OAuth URL setting for .me and .be domains
-        if (hostname.includes('.deriv.me')) {
-            original_url.hostname = 'oauth.deriv.me';
-        } else if (hostname.includes('.deriv.be')) {
-            original_url.hostname = 'oauth.deriv.be';
-        } else {
-            // Fallback to original logic for other domains
-            const current_domain = getCurrentProductionDomain();
-            if (current_domain) {
-                const domain_suffix = current_domain.replace(/^[^.]+\./, '');
-                original_url.hostname = `oauth.${domain_suffix}`;
-            }
-        }
+        oauth_host = configured_server_url;
     }
-    return original_url.toString() || oauth_url;
+
+    // 3) Pick app_id. Domain-based; never silently random.
+    const app_id = getAppId();
+
+    // 4) Build canonical URL. brand is always 'deriv'.
+    const final_url = `https://${oauth_host}/oauth2/authorize?app_id=${app_id}&l=EN&brand=deriv`;
+
+    try {
+        // Debug — leave on so production issues are easy to diagnose from devtools.
+        // eslint-disable-next-line no-console
+        console.info('[OAuth] hostname:', hostname);
+        // eslint-disable-next-line no-console
+        console.info('[OAuth] oauth_host:', oauth_host);
+        // eslint-disable-next-line no-console
+        console.info('[OAuth] app_id:', app_id);
+        // eslint-disable-next-line no-console
+        console.info('[OAuth] final URL:', final_url);
+        // Use the SDK URL only for parity warnings — never as the source of truth.
+        const sdk_url = URLUtils.getOauthURL();
+        if (sdk_url && !sdk_url.includes(oauth_host)) {
+            // eslint-disable-next-line no-console
+            console.warn('[OAuth] SDK suggested', sdk_url, '— overridden to', final_url);
+        }
+    } catch {
+        /* noop */
+    }
+
+    return final_url;
 };
