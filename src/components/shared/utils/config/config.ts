@@ -1,5 +1,5 @@
-import { LocalStorageConstants, LocalStorageUtils, URLUtils } from '@deriv-com/utils';
 import { isStaging } from '../url/helpers';
+import { buildAuthUrlForCurrentHost } from '../deriv-oauth';
 
 export const APP_IDS = {
     LOCALHOST: 36300,
@@ -156,67 +156,4 @@ export const getDebugServiceWorker = () => {
     return false;
 };
 
-export const generateOAuthURL = () => {
-    const hostname = window.location.hostname;
-
-    // 1) Pick OAuth host. ONLY use deriv.me / deriv.be hosts when the page itself
-    //    is on a Deriv-owned .me / .be domain. For EVERY other host (including
-    //    ddbot.pages.dev, *.pages.dev, *.replit.dev, localhost, etc.) we ALWAYS
-    //    fall back to oauth.deriv.com. We never strip a non-Deriv subdomain.
-    let oauth_host = 'oauth.deriv.com';
-    if (/(^|\.)deriv\.me$/i.test(hostname)) {
-        oauth_host = 'oauth.deriv.me';
-    } else if (/(^|\.)deriv\.be$/i.test(hostname)) {
-        oauth_host = 'oauth.deriv.be';
-    }
-
-    // 2) Honour QA/configured server overrides if explicitly set.
-    const configured_server_url = (LocalStorageUtils.getValue(LocalStorageConstants.configServerURL) ||
-        localStorage.getItem('config.server_url')) as string;
-    const valid_server_urls = ['green.derivws.com', 'red.derivws.com', 'blue.derivws.com', 'canary.derivws.com'];
-    if (
-        configured_server_url &&
-        typeof configured_server_url === 'string' &&
-        !valid_server_urls.includes(configured_server_url)
-    ) {
-        oauth_host = configured_server_url;
-    }
-
-    // 3) Pick app_id. Domain-based; never silently random.
-    const app_id = getAppId();
-
-    // 4) Pick redirect URI. Use the app's own origin so Deriv has zero
-    //    ambiguity about where to send the user back after authorise. This
-    //    must EXACTLY match a Redirect URL registered on the Deriv app.
-    const redirect_uri = `${window.location.protocol}//${window.location.host}`;
-
-    // 5) Build canonical URL. brand is always 'deriv'.
-    const final_url =
-        `https://${oauth_host}/oauth2/authorize` +
-        `?app_id=${encodeURIComponent(String(app_id))}` +
-        `&l=EN` +
-        `&brand=deriv` +
-        `&redirect_uri=${encodeURIComponent(redirect_uri)}`;
-
-    try {
-        // Debug — leave on so production issues are easy to diagnose from devtools.
-        // eslint-disable-next-line no-console
-        console.info('[OAuth] hostname:', hostname);
-        // eslint-disable-next-line no-console
-        console.info('[OAuth] oauth_host:', oauth_host);
-        // eslint-disable-next-line no-console
-        console.info('[OAuth] app_id:', app_id);
-        // eslint-disable-next-line no-console
-        console.info('[OAuth] final URL:', final_url);
-        // Use the SDK URL only for parity warnings — never as the source of truth.
-        const sdk_url = URLUtils.getOauthURL();
-        if (sdk_url && !sdk_url.includes(oauth_host)) {
-            // eslint-disable-next-line no-console
-            console.warn('[OAuth] SDK suggested', sdk_url, '— overridden to', final_url);
-        }
-    } catch {
-        /* noop */
-    }
-
-    return final_url;
-};
+export const generateOAuthURL = (): string => buildAuthUrlForCurrentHost();

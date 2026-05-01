@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ChunkLoader from '@/components/loader/chunk-loader';
 import { generateOAuthURL } from '@/components/shared';
+import { parseOAuthCallback } from '@/components/shared/utils/deriv-oauth';
 import DesktopWrapper from '@/components/shared_ui/desktop-wrapper';
 import Dialog from '@/components/shared_ui/dialog';
 import MobileWrapper from '@/components/shared_ui/mobile-wrapper';
@@ -84,6 +85,10 @@ const AppWrapper = observer(() => {
     const active_hash_tab = GetHashedValue(active_tab);
 
     const { onRenderTMBCheck, isTmbEnabled } = useTMB();
+
+    React.useEffect(() => {
+        parseOAuthCallback();
+    }, []);
 
     React.useEffect(() => {
         const el_dashboard = document.getElementById('id-dbot-dashboard');
