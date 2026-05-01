@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Cookies from 'js-cookie';
 import { requestOidcAuthentication } from '@deriv-com/auth-client';
+import { getOidcRedirectUri } from '@/components/shared/utils/deriv-oauth';
 import { removeCookies } from '@/components/shared/utils/storage/storage';
 import { api_base } from '@/external/bot-skeleton';
 import { setAuthData } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
@@ -383,7 +384,7 @@ const useTMB = (): UseTMBReturn => {
                     }
                     try {
                         await requestOidcAuthentication({
-                            redirectCallbackUri: `${window.location.origin}/callback`,
+                            redirectCallbackUri: getOidcRedirectUri(),
                             postLogoutRedirectUri: window.location.origin,
                         });
                     } catch (error) {

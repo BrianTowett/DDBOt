@@ -8,6 +8,7 @@ import { api_base } from '@/external/bot-skeleton';
 import { useOfflineDetection } from '@/hooks/useOfflineDetection';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
+import { getOidcRedirectUri } from '@/components/shared/utils/deriv-oauth';
 import { handleOidcAuthFailure } from '@/utils/auth-utils';
 import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import { useDevice } from '@deriv-com/ui';
@@ -169,7 +170,7 @@ const Layout = observer(() => {
                     }
                     try {
                         await requestOidcAuthentication({
-                            redirectCallbackUri: `${window.location.origin}/callback`,
+                            redirectCallbackUri: getOidcRedirectUri(),
                             ...(query_param_currency
                                 ? {
                                       state: {

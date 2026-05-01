@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import BalanceConverter from '@/components/balance-converter/balance-converter';
 import PWAInstallButton from '@/components/pwa-install-button';
 import { standalone_routes } from '@/components/shared';
+import { getOidcRedirectUri } from '@/components/shared/utils/deriv-oauth';
 import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import Button from '@/components/shared_ui/button';
 import useActiveAccount from '@/hooks/api/account/useActiveAccount';
@@ -144,7 +145,7 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                             clearAuthData(false);
                             try {
                                 await requestOidcAuthentication({
-                                    redirectCallbackUri: `${window.location.origin}/callback`,
+                                    redirectCallbackUri: getOidcRedirectUri(),
                                     postLogoutRedirectUri: window.location.origin,
                                 });
                             } catch (error) {

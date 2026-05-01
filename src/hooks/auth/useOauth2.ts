@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import Cookies from 'js-cookie';
 import RootStore from '@/stores/root-store';
+import { getOidcRedirectUri } from '@/components/shared/utils/deriv-oauth';
 import { handleOidcAuthFailure } from '@/utils/auth-utils';
 import { Analytics } from '@deriv-com/analytics';
 import { OAuth2Logout, requestOidcAuthentication } from '@deriv-com/auth-client';
@@ -59,7 +60,7 @@ export const useOauth2 = ({
         client?.setIsLoggingOut(true);
         try {
             await OAuth2Logout({
-                redirectCallbackUri: `${window.location.origin}/callback`,
+                redirectCallbackUri: getOidcRedirectUri(),
                 WSLogoutAndRedirect: handleLogout ?? (() => Promise.resolve()),
                 postLogoutRedirectUri: window.location.origin,
             }).catch(err => {
@@ -80,7 +81,7 @@ export const useOauth2 = ({
     const retriggerOAuth2Login = async () => {
         try {
             await requestOidcAuthentication({
-                redirectCallbackUri: `${window.location.origin}/callback`,
+                redirectCallbackUri: getOidcRedirectUri(),
                 postLogoutRedirectUri: window.location.origin,
             }).catch(err => {
                 handleOidcAuthFailure(err);

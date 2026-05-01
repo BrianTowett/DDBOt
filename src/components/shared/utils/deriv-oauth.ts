@@ -3,12 +3,31 @@
  *
  * To swap the base URL (e.g. when Deriv Support provides a new endpoint),
  * change DERIV_CONFIG.baseUrl here — nowhere else.
+ *
+ * redirectUri MUST be character-for-character identical to the URL registered
+ * in the Deriv developer portal (developers.deriv.com). No trailing slash.
  */
 export const DERIV_CONFIG = {
     baseUrl: 'https://oauth.deriv.com/oauth2/authorize',
     appId: '335EYAbheBDRlnzzWUIPq',
-    redirectUri: 'https://ddbot.pages.dev',
+    redirectUri: 'https://ddbot.pages.dev', // MUST EXACTLY match dashboard — do not add trailing slash
 } as const;
+
+/**
+ * Returns the redirect URI that must be sent to Deriv's OAuth / OIDC endpoint.
+ * Validates for common mistakes (trailing slash) and logs the value so you can
+ * confirm it matches the dashboard registration before every redirect.
+ */
+export const getOidcRedirectUri = (): string => {
+    const uri = DERIV_CONFIG.redirectUri;
+
+    if (uri.endsWith('/')) {
+        console.warn('[OAuth] Trailing slash detected — this WILL cause a redirect_uri mismatch on Deriv.');
+    }
+
+    console.log('[OAuth] Redirect URI being sent:', uri);
+    return uri;
+};
 
 type BuildDerivAuthUrlParams = {
     baseUrl?: string;
@@ -33,6 +52,8 @@ export const buildDerivAuthUrl = ({
     url.searchParams.set('brand', 'deriv');
     url.searchParams.set('redirect_uri', redirectUri);
     if (state) url.searchParams.set('state', state);
+
+    console.log('[OAuth] Final auth URL:', url.toString());
     return url.toString();
 };
 
@@ -52,10 +73,7 @@ export const buildAuthUrlForCurrentHost = (): string => {
         baseUrl = 'https://oauth.deriv.be/oauth2/authorize';
     }
 
-    const redirectUri =
-        typeof window !== 'undefined'
-            ? `${window.location.protocol}//${window.location.host}`
-            : DERIV_CONFIG.redirectUri;
+    const redirectUri = getOidcRedirectUri();
 
     let state: string | undefined;
     try {
@@ -64,16 +82,13 @@ export const buildAuthUrlForCurrentHost = (): string => {
         state = Math.random().toString(36).slice(2);
     }
 
-    const authUrl = buildDerivAuthUrl({ baseUrl, redirectUri, state });
-
     console.info('[OAuth] hostname   :', hostname);
     console.info('[OAuth] baseUrl    :', baseUrl);
     console.info('[OAuth] appId      :', DERIV_CONFIG.appId);
     console.info('[OAuth] redirectUri:', redirectUri);
     console.info('[OAuth] state      :', state);
-    console.info('[OAuth] final URL  :', authUrl);
 
-    return authUrl;
+    return buildDerivAuthUrl({ baseUrl, redirectUri, state });
 };
 
 /**

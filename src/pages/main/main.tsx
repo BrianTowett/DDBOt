@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ChunkLoader from '@/components/loader/chunk-loader';
-import { parseOAuthCallback } from '@/components/shared/utils/deriv-oauth';
+import { getOidcRedirectUri, parseOAuthCallback } from '@/components/shared/utils/deriv-oauth';
 import DesktopWrapper from '@/components/shared_ui/desktop-wrapper';
 import Dialog from '@/components/shared_ui/dialog';
 import MobileWrapper from '@/components/shared_ui/mobile-wrapper';
@@ -253,7 +253,7 @@ const AppWrapper = observer(() => {
             } else {
                 try {
                     await requestOidcAuthentication({
-                        redirectCallbackUri: `${window.location.origin}/callback`,
+                        redirectCallbackUri: getOidcRedirectUri(),
                         ...(query_param_currency ? { state: { account: query_param_currency } } : {}),
                     });
                 } catch (err) {
