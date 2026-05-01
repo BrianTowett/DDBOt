@@ -3,7 +3,8 @@ import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 import BalanceConverter from '@/components/balance-converter/balance-converter';
 import PWAInstallButton from '@/components/pwa-install-button';
-import { generateOAuthURL, standalone_routes } from '@/components/shared';
+import { standalone_routes } from '@/components/shared';
+import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import Button from '@/components/shared_ui/button';
 import useActiveAccount from '@/hooks/api/account/useActiveAccount';
 import { useOauth2 } from '@/hooks/auth/useOauth2';
@@ -141,21 +142,14 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                         tertiary
                         onClick={async () => {
                             clearAuthData(false);
-                            const getQueryParams = new URLSearchParams(window.location.search);
-                            const currency = getQueryParams.get('account') ?? '';
-                            const query_param_currency =
-                                currency || sessionStorage.getItem('query_param_currency') || 'USD';
-
                             try {
-                                // The dbwinV2 Deriv app is registered as an OAuth (legacy) app
-                                // with redirect URL https://ddbot.pages.dev — use the OAuth flow
-                                // directly so tokens come back as ?acct1=&token1= on the root URL,
-                                // which AuthWrapper.tsx already handles. This avoids OIDC redirect_uri
-                                // mismatch errors with Deriv.
-                                window.location.replace(generateOAuthURL());
+                                await requestOidcAuthentication({
+                                    redirectCallbackUri: `${window.location.origin}/callback`,
+                                    postLogoutRedirectUri: window.location.origin,
+                                });
                             } catch (error) {
                                 // eslint-disable-next-line no-console
-                                console.error(error);
+                                console.error('[Login] requestOidcAuthentication failed:', error);
                             }
                         }}
                     >
