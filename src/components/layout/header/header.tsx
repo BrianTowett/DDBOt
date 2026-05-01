@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import BalanceConverter from '@/components/balance-converter/balance-converter';
 import PWAInstallButton from '@/components/pwa-install-button';
 import { standalone_routes } from '@/components/shared';
-import { buildDerivAuthUrl, DERIV_CONFIG, getOidcRedirectUri } from '@/components/shared/utils/deriv-oauth';
+import { DERIV_CONFIG, getOidcRedirectUri } from '@/components/shared/utils/deriv-oauth';
 import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import Button from '@/components/shared_ui/button';
 import useActiveAccount from '@/hooks/api/account/useActiveAccount';
@@ -141,21 +141,19 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                 <div className='auth-actions'>
                     <Button
                         tertiary
-                        onClick={() => {
+                        onClick={async () => {
                             clearAuthData(false);
-
-                            const authUrl = buildDerivAuthUrl({
-                                baseUrl: DERIV_CONFIG.baseUrl,
-                                appId: DERIV_CONFIG.appId,
-                                redirectUri: DERIV_CONFIG.redirectUri,
-                                state: crypto.randomUUID(),
-                            });
-
-                            // pause here in DevTools so you can inspect the exact URL
-                            // eslint-disable-next-line no-debugger
-                            debugger;
-
-                            window.location.href = authUrl;
+                            try {
+                                const redirectUri = getOidcRedirectUri();
+                                console.log('[Login] redirectCallbackUri sent to Deriv:', redirectUri);
+                                console.log('[Login] appId:', DERIV_CONFIG.appId);
+                                await requestOidcAuthentication({
+                                    redirectCallbackUri: redirectUri,
+                                    postLogoutRedirectUri: window.location.origin,
+                                });
+                            } catch (error) {
+                                console.error('[Login] requestOidcAuthentication failed:', error);
+                            }
                         }}
                     >
                         <Localize i18n_default_text='Log in' />

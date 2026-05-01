@@ -19,6 +19,27 @@ const AppRoot = lazy(() => import('./app-root'));
 const FreeBots = lazy(() => import('../pages/free-bots'));
 const AnalysisTool = lazy(() => import('../pages/analysis-tool'));
 
+/**
+ * When the registered redirect_uri is the root (https://ddbot.pages.dev) Deriv
+ * sends the OIDC authorization code to the index route as query params:
+ *   https://ddbot.pages.dev?code=...&state=...
+ *
+ * This component detects those params and renders <CallbackPage> in place of
+ * the normal <AppRoot>, so token exchange works without changing the route.
+ */
+const IndexRoute = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('code') && params.has('state')) {
+        console.log('[OIDC] Detected authorization code at root — rendering callback handler');
+        return <CallbackPage />;
+    }
+    return (
+        <Suspense fallback={<ChunkLoader message={localize('Loading...')} />}>
+            <AppRoot />
+        </Suspense>
+    );
+};
+
 const { TRANSLATIONS_CDN_URL, R2_PROJECT_NAME, CROWDIN_BRANCH_NAME } = process.env;
 const i18nInstance = initializeI18n({
     cdnUrl: `${TRANSLATIONS_CDN_URL}/${R2_PROJECT_NAME}/${CROWDIN_BRANCH_NAME}`,
@@ -54,7 +75,7 @@ const router = createBrowserRouter(
             }
         >
             {/* All child routes will be passed as children to Layout */}
-            <Route index element={<AppRoot />} />
+            <Route index element={<IndexRoute />} />
             <Route path='endpoint' element={<Endpoint />} />
             <Route path='callback' element={<CallbackPage />} />
             <Route path='free-bots' element={<FreeBots />} />
