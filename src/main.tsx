@@ -79,20 +79,37 @@ class RootErrorBoundary extends React.Component<
     }
 }
 
-// Force the registered Deriv app IDs for this project so that OAuth/OIDC login
-// uses the correct redirect URLs and client config.
-// Primary (v2): 335EYAbheBDRlnzzWUIPq
-// Legacy  (v1): 335Er2sup70lKuoUAb8Vl
+// ─── Deriv OIDC app-ID bootstrap ─────────────────────────────────────────────
+//
+// @deriv-com/utils LocalStorageUtils.getValue() reads values with JSON.parse().
+// If we store a plain string the JSON.parse() throws, getValue() catches and
+// returns null, then getAppId() falls through to the hardcoded "36300" default.
+// We MUST store with JSON.stringify() so the library can read it correctly.
+//
+// This runs synchronously at module init — before React mounts and before any
+// requestOidcAuthentication() can fire — so the correct client_id is in place
+// for every OIDC request.
+// ─────────────────────────────────────────────────────────────────────────────
 const DBWIN_APP_ID = '335EYAbheBDRlnzzWUIPq';
+const DBWIN_APP_ID_JSON = JSON.stringify(DBWIN_APP_ID); // '"335EYAbheBDRlnzzWUIPq"'
+console.log('[AUTH CHECK] No legacy OAuth should run — only OIDC via requestOidcAuthentication');
 try {
     const existing = window.localStorage.getItem('config.app_id');
-    if (existing !== DBWIN_APP_ID) {
-        window.localStorage.setItem('config.app_id', DBWIN_APP_ID);
+    if (existing !== DBWIN_APP_ID_JSON) {
+        window.localStorage.setItem('config.app_id', DBWIN_APP_ID_JSON);
+        // Clear any OIDC endpoint cache that was stored under the wrong app-id
+        // so the library fetches a fresh discovery document.
+        window.localStorage.removeItem('config.oidc_endpoints');
+        // eslint-disable-next-line no-console
+        console.log('[AUTH] config.app_id updated to', DBWIN_APP_ID, '— OIDC endpoint cache cleared');
+    } else {
+        // eslint-disable-next-line no-console
+        console.log('[AUTH] config.app_id already correct:', DBWIN_APP_ID);
     }
 } catch (e) {
-    // localStorage may be unavailable in some private modes — login will fall back to defaults
+    // localStorage unavailable in some private modes — login will fall back to defaults
     // eslint-disable-next-line no-console
-    console.warn('Unable to set Deriv app ID override', e);
+    console.warn('[AUTH] Unable to set Deriv app ID override:', e);
 }
 
 // Hard external safety net: if React has rendered something but AppContent is
