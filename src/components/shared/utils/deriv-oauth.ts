@@ -39,6 +39,9 @@ type BuildDerivAuthUrlParams = {
 /**
  * Build a fully-formed Deriv OAuth authorisation URL.
  * Every param is optional — falls back to DERIV_CONFIG values.
+ *
+ * redirect_uri is trimmed to prevent invisible whitespace mismatches.
+ * No duplicate params — URLSearchParams.set() always overwrites.
  */
 export const buildDerivAuthUrl = ({
     baseUrl = DERIV_CONFIG.baseUrl,
@@ -46,15 +49,21 @@ export const buildDerivAuthUrl = ({
     redirectUri = DERIV_CONFIG.redirectUri,
     state,
 }: BuildDerivAuthUrlParams = {}): string => {
+    const cleanRedirectUri = redirectUri.trim();
+
+    console.log('Redirect URI RAW    :', JSON.stringify(cleanRedirectUri));
+    console.log('Redirect URI LENGTH :', cleanRedirectUri.length);
+
     const url = new URL(baseUrl);
     url.searchParams.set('app_id', appId);
     url.searchParams.set('l', 'EN');
     url.searchParams.set('brand', 'deriv');
-    url.searchParams.set('redirect_uri', redirectUri);
+    url.searchParams.set('redirect_uri', cleanRedirectUri); // CRITICAL: exact string, no modification
     if (state) url.searchParams.set('state', state);
 
-    console.log('[OAuth] Final auth URL:', url.toString());
-    return url.toString();
+    const finalUrl = url.toString();
+    console.log('FULL AUTH URL:', finalUrl);
+    return finalUrl;
 };
 
 /**
