@@ -872,19 +872,6 @@ const MatchesSignal: React.FC = () => {
                 </div>
             </div>
 
-            {/* Legend */}
-            <div className='dp-ai__legend'>
-                <h4>Signal Condition</h4>
-                <div className='ms-ai__legend-block'>
-                    <strong>MATCH Signal</strong>
-                    <ul>
-                        <li>The difference between the <span style={{ color: '#3fb950' }}>GREEN bar %</span> and <span style={{ color: '#58a6ff' }}>BLUE bar %</span> must be ≤ {MATCH_THRESHOLD}%</li>
-                        <li>Example: GREEN 12.0% − BLUE 11.9% = 0.1% → <strong style={{ color: '#f0c419' }}>MATCH ✓</strong></li>
-                        <li>Signal locks in after {CONFIRM_WINDOW} consecutive evaluations confirming the condition</li>
-                        <li>If you lock a market and the diff later exceeds {MATCH_THRESHOLD}%, a danger alarm fires automatically</li>
-                    </ul>
-                </div>
-            </div>
         </div>
     );
 };

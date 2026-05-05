@@ -288,33 +288,4 @@
         text-transform: uppercase;
     }
 
-    // ── Legend ────────────────────────────────────────────────────────────────
-    &__legend-block {
-        background: #1a1a00;
-        border: 1px solid #3d2f00;
-        border-radius: 8px;
-        padding: 12px 14px;
-        font-size: 12px;
-
-        strong {
-            display: block;
-            color: #f0c419;
-            margin-bottom: 8px;
-            font-size: 13px;
-        }
-
-        ul {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        li {
-            color: #c9d1d9;
-            line-height: 1.5;
-        }
-    }
 }
