@@ -582,9 +582,15 @@ const MatchesSignal: React.FC = () => {
     const handleLockSymbol  = (sym: string | null) => setLockedSymbol(prev => (prev === sym ? null : sym));
     const handleDangerSound = (id: DangerSoundId) => { setDangerSoundId(id); playDangerById(id); };
 
-    const readyMarkets  = marketList.filter(m => markets[m.value]?.ready);
-    const matchCount    = readyMarkets.filter(m => markets[m.value]?.confirmedSignal === 'MATCH').length;
-    const lockedLabel   = marketList.find(m => m.value === lockedSymbol)?.label ?? null;
+    const [filter, setFilter] = useState<'ALL' | 'MATCH'>('ALL');
+
+    const readyMarkets   = marketList.filter(m => markets[m.value]?.ready);
+    const matchCount     = readyMarkets.filter(m => markets[m.value]?.confirmedSignal === 'MATCH').length;
+    const lockedLabel    = marketList.find(m => m.value === lockedSymbol)?.label ?? null;
+    const displayMarkets = marketList.filter(m => {
+        if (filter === 'MATCH') return markets[m.value]?.confirmedSignal === 'MATCH';
+        return true;
+    });
 
     return (
         <div className='dp-ai ms-ai'>
@@ -594,7 +600,7 @@ const MatchesSignal: React.FC = () => {
                     <h2 className='dp-ai__title'>Matches Signal — Volatility Scanner</h2>
                 </div>
                 <p className='dp-ai__subtitle'>
-                    Scanning {marketList.length} markets · signal confirmed when |GREEN% − BLUE%| ≤ {MATCH_THRESHOLD}% · confirmed after {CONFIRM_WINDOW} consecutive matches
+                    Scanning {marketList.length} markets · signal confirmed when |GREEN% − BLUE%| ≤ {MATCH_THRESHOLD}% · confirmed after {CONFIRM_WINDOW} consecutive matches · Predict = BLUE digit · Entry = GREEN digit
                 </p>
             </div>
 
@@ -700,10 +706,31 @@ const MatchesSignal: React.FC = () => {
                 {scanTime && <div className='dp-ai__summary-time'>Updated {scanTime.toLocaleTimeString()}</div>}
             </div>
 
+            {/* Filter bar */}
+            <div className='ms-ai__filter-row'>
+                <button
+                    className={`ms-ai__filter-btn ${filter === 'ALL' ? 'ms-ai__filter-btn--active-all' : ''}`}
+                    onClick={() => setFilter('ALL')}
+                >
+                    All Markets
+                </button>
+                <button
+                    className={`ms-ai__filter-btn ms-ai__filter-btn--match-only ${filter === 'MATCH' ? 'ms-ai__filter-btn--active-match' : ''}`}
+                    onClick={() => setFilter('MATCH')}
+                >
+                    ✓ MATCH Only {matchCount > 0 && <span className='ms-ai__filter-count'>{matchCount}</span>}
+                </button>
+            </div>
+
             {/* Market cards */}
             <div className='dp-ai__grid-scroll'>
                 <div className='dp-ai__grid'>
-                    {marketList.map(m => {
+                    {displayMarkets.length === 0 && filter === 'MATCH' && (
+                        <div className='ms-ai__empty-state'>
+                            No confirmed MATCH signals yet — scanning…
+                        </div>
+                    )}
+                    {displayMarkets.map(m => {
                         const state     = markets[m.value];
                         const an        = state?.analysis;
                         const ready     = state?.ready;
@@ -716,7 +743,7 @@ const MatchesSignal: React.FC = () => {
                         return (
                             <div
                                 key={m.value}
-                                className={`dp-ai__card ms-ai__card--${confirmed.toLowerCase()} ${isLocked ? 'dp-ai__card--locked' : ''}`}
+                                className={`ms-ai__card ms-ai__card--${confirmed.toLowerCase()} ${isLocked ? 'dp-ai__card--locked' : ''}`}
                             >
                                 <div className='dp-ai__card-header'>
                                     <span className='dp-ai__card-label'>{m.label}</span>
@@ -742,11 +769,24 @@ const MatchesSignal: React.FC = () => {
 
                                 {ready && an ? (
                                     <>
-                                        {/* Signal Confirmed banner */}
+                                        {/* Signal Confirmed banner + Predict/Entry */}
                                         {confirmed === 'MATCH' && (
-                                            <div className='ms-ai__confirmed-banner'>
-                                                ✅ Signal Confirmed
-                                            </div>
+                                            <>
+                                                <div className='ms-ai__confirmed-banner'>
+                                                    ✅ Signal Confirmed
+                                                </div>
+                                                <div className='ms-ai__predict-row'>
+                                                    <div className='ms-ai__predict-cell ms-ai__predict-cell--predict'>
+                                                        <span className='ms-ai__predict-lbl'>Predict</span>
+                                                        <span className='ms-ai__predict-digit'>{an.blue.digit}</span>
+                                                    </div>
+                                                    <div className='ms-ai__predict-divider' />
+                                                    <div className='ms-ai__predict-cell ms-ai__predict-cell--entry'>
+                                                        <span className='ms-ai__predict-lbl'>Entry</span>
+                                                        <span className='ms-ai__predict-digit'>{an.green.digit}</span>
+                                                    </div>
+                                                </div>
+                                            </>
                                         )}
 
                                         {/* Confirmation dots */}
@@ -785,18 +825,22 @@ const MatchesSignal: React.FC = () => {
                                             </span>
                                         </div>
 
-                                        {/* Green & Blue bars */}
+                                        {/* Color bars */}
                                         <div className='dp-ai__bars'>
                                             {(
                                                 [
-                                                    { key: 'green',  bar: an.green  },
-                                                    { key: 'blue',   bar: an.blue   },
-                                                    { key: 'yellow', bar: an.yellow },
-                                                    { key: 'red',    bar: an.red    },
+                                                    { key: 'green',  bar: an.green,  role: confirmed === 'MATCH' ? 'Entry'   : undefined },
+                                                    { key: 'blue',   bar: an.blue,   role: confirmed === 'MATCH' ? 'Predict' : undefined },
+                                                    { key: 'yellow', bar: an.yellow, role: undefined },
+                                                    { key: 'red',    bar: an.red,    role: undefined },
                                                 ] as const
-                                            ).map(({ key, bar }) => (
+                                            ).map(({ key, bar, role }) => (
                                                 <div key={key} className={`dp-ai__bar-row dp-ai__bar-row--${key}`}>
-                                                    <span className='dp-ai__bar-label'>{key.toUpperCase()}</span>
+                                                    <span className='dp-ai__bar-label'>
+                                                        {role
+                                                            ? <span className='ms-ai__bar-role'>{role}</span>
+                                                            : key.toUpperCase()}
+                                                    </span>
                                                     <span className='dp-ai__bar-digit'>{bar.digit}</span>
                                                     <div className='dp-ai__bar-track'>
                                                         <div
