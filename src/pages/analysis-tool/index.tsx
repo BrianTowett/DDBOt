@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import DCirclesAnalysis from './dcircles-analysis';
 import DPToolsAI from './dp-tools-ai';
+import MatchesSignal from './matches-signal';
 import OverUnderSignal from './over-under-signal';
 import SignalsScanner from './signals-scanner';
 import XenonAI from './xenon-ai';
@@ -108,6 +109,7 @@ const AnalysisTool = observer(() => {
         'Tick Analyser',
         'Xenon AI',
         'Over/Under Signal',
+        'Matches Signal',
         'TikTok YouTube Live',
     ];
 
@@ -125,6 +127,8 @@ const AnalysisTool = observer(() => {
                 return <DPToolsAI />;
             case 'Over/Under Signal':
                 return <OverUnderSignal />;
+            case 'Matches Signal':
+                return <MatchesSignal />;
             case 'TikTok YouTube Live':
                 return <LiveStreamsTab />;
             default:

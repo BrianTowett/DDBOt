@@ -1,0 +1,176 @@
+.ms-ai {
+    // ── Card states ──────────────────────────────────────────────────────────
+    &__card--match {
+        background: #161b22;
+        border: 1px solid #b8860b;
+        border-radius: 10px;
+        padding: 12px 14px;
+        box-shadow: 0 0 12px #f0c41922;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    &__card--neutral {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 12px 14px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    // ── Signal Confirmed banner ───────────────────────────────────────────────
+    &__confirmed-banner {
+        background: linear-gradient(90deg, #3d2f00, #1a1a00);
+        border: 1px solid #f0c419;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #f0c419;
+        text-align: center;
+        margin-bottom: 8px;
+        letter-spacing: 0.4px;
+        animation: ms-confirmed-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes ms-confirmed-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 #f0c41930; }
+        50%       { box-shadow: 0 0 8px 3px #f0c41920; }
+    }
+
+    // ── Badge ─────────────────────────────────────────────────────────────────
+    &__badge--match {
+        background: #3d2f00;
+        color: #f0c419;
+        border: 1px solid #f0c419;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    &__badge--neutral {
+        background: #21262d;
+        color: #8b949e;
+        border: 1px solid #30363d;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    // ── Confirmation dot ──────────────────────────────────────────────────────
+    &__confirm-dot--match {
+        background: #f0c419;
+        border-color: #f0c419;
+    }
+
+    // ── Diff meter ────────────────────────────────────────────────────────────
+    &__diff-row {
+        display: grid;
+        grid-template-columns: 110px 1fr 44px 44px;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 10px;
+        margin-top: 4px;
+    }
+
+    &__diff-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #8b949e;
+        letter-spacing: 0.2px;
+    }
+
+    &__diff-track {
+        height: 6px;
+        background: #21262d;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    &__diff-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.4s ease, background 0.3s;
+
+        &--match {
+            background: #f0c419;
+        }
+        &--no {
+            background: #f85149;
+        }
+    }
+
+    &__diff-val {
+        font-size: 11px;
+        font-weight: 700;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+
+        &--match { color: #f0c419; }
+        &--no    { color: #f85149; }
+    }
+
+    &__diff-badge {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 5px;
+        border-radius: 8px;
+        text-align: center;
+        letter-spacing: 0.2px;
+
+        &--pass {
+            background: #3d2f00;
+            color: #f0c419;
+            border: 1px solid #f0c41966;
+        }
+        &--fail {
+            background: #3d0f0f;
+            color: #f85149;
+            border: 1px solid #f8514966;
+        }
+    }
+
+    // ── Summary match item ────────────────────────────────────────────────────
+    &__summary-item--match {
+        .dp-ai__summary-val {
+            color: #f0c419;
+        }
+    }
+
+    &__summary-val--match {
+        color: #f0c419 !important;
+    }
+
+    // ── Legend ────────────────────────────────────────────────────────────────
+    &__legend-block {
+        background: #1a1a00;
+        border: 1px solid #3d2f00;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 12px;
+
+        strong {
+            display: block;
+            color: #f0c419;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        li {
+            color: #c9d1d9;
+            line-height: 1.5;
+        }
+    }
+}
