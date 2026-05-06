@@ -361,9 +361,8 @@ const getWsUrl = () => {
 const MatchesSignal: React.FC = () => {
     const [tickCount,  setTickCount]  = useState(DEFAULT_TICKS);
     const [markets,    setMarkets]    = useState<MSMarketsMap>({});
-    const [connected,    setConnected]    = useState(false);
-    const [reconnecting, setReconnecting] = useState(false);
-    const [scanTime,     setScanTime]     = useState<Date | null>(null);
+    const [connected,  setConnected]  = useState(false);
+    const [scanTime,   setScanTime]   = useState<Date | null>(null);
     const [marketList, setMarketList] = useState(FALLBACK_MARKETS);
     const marketListRef = useRef(FALLBACK_MARKETS);
 
@@ -396,8 +395,6 @@ const MatchesSignal: React.FC = () => {
     const stateRef        = useRef<MSMarketsMap>({});
     const tickCountRef    = useRef(DEFAULT_TICKS);
     const prevSignalsRef  = useRef<Record<string, 'MATCH' | 'NEUTRAL'>>({});
-    const reconnTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const mountedRef      = useRef(true);
     const notifOnRef      = useRef(notifOn);
     const selectedSndRef  = useRef<SoundId>(selectedSnd);
     const notifCoolRef    = useRef<Record<string, number>>({});
@@ -475,8 +472,6 @@ const MatchesSignal: React.FC = () => {
 
     const startScan = useCallback(
         (count: number, list?: { label: string; value: string }[]) => {
-            if (reconnTimerRef.current) { clearTimeout(reconnTimerRef.current); reconnTimerRef.current = null; }
-            setReconnecting(false);
             if (wsRef.current) wsRef.current.close();
             const useList = list ?? marketListRef.current;
             initMarkets(useList);
@@ -575,29 +570,12 @@ const MatchesSignal: React.FC = () => {
             };
 
             ws.onerror = () => setConnected(false);
-            ws.onclose = () => {
-                setConnected(false);
-                if (!mountedRef.current) return;
-                setReconnecting(true);
-                reconnTimerRef.current = setTimeout(() => {
-                    if (!mountedRef.current) return;
-                    setReconnecting(false);
-                    startScan(tickCountRef.current);
-                }, 3000);
-            };
+            ws.onclose = () => setConnected(false);
         },
         [initMarkets, updateMarket]
     );
 
-    useEffect(() => {
-        mountedRef.current = true;
-        startScan(tickCount);
-        return () => {
-            mountedRef.current = false;
-            if (reconnTimerRef.current) clearTimeout(reconnTimerRef.current);
-            wsRef.current?.close();
-        };
-    }, []);
+    useEffect(() => { startScan(tickCount); return () => { wsRef.current?.close(); }; }, []);
 
     const handleRescan     = () => startScan(tickCount);
     const handleTickCount  = (n: number) => { setTickCount(n); tickCountRef.current = n; startScan(n); };
@@ -623,9 +601,8 @@ const MatchesSignal: React.FC = () => {
         <div className='dp-ai ms-ai'>
             <div className='dp-ai__header'>
                 <div className='dp-ai__title-row'>
-                    <span className={`dp-ai__dot ${connected ? 'dp-ai__dot--live' : reconnecting ? 'dp-ai__dot--reconnecting' : 'dp-ai__dot--off'}`} />
+                    <span className={`dp-ai__dot ${connected ? 'dp-ai__dot--live' : 'dp-ai__dot--off'}`} />
                     <h2 className='dp-ai__title'>Matches Signal — Volatility Scanner</h2>
-                    {reconnecting && <span className='dp-ai__reconnect-badge'>↻ Reconnecting…</span>}
                 </div>
                 <p className='dp-ai__subtitle'>
                     Scanning {marketList.length} markets · signal confirmed when |GREEN% − BLUE%| ≤ {MATCH_THRESHOLD}% · confirmed after {CONFIRM_WINDOW} consecutive matches · Predict = BLUE digit · Entry = GREEN digit
