@@ -305,6 +305,21 @@ const DCirclesAnalysis = () => {
             </div>
 
             <div className='dcircles__recent-section'>
+                {(() => {
+                    const streak = recentEO.length > 0
+                        ? (() => {
+                            const last = recentEO[recentEO.length - 1];
+                            let count = 0;
+                            for (let i = recentEO.length - 1; i >= 0 && recentEO[i] === last; i--) count++;
+                            return { type: last, count };
+                        })()
+                        : null;
+                    return streak && streak.count >= 2 ? (
+                        <div className={`dcircles__streak-badge dcircles__streak-badge--${streak.type === 'E' ? 'even' : 'odd'}`}>
+                            {streak.type === 'E' ? 'EVEN' : 'ODD'} ×{streak.count} streak
+                        </div>
+                    ) : null;
+                })()}
                 <div className='dcircles__recent-header'>
                     <span>Recent E/O</span>
                     <button className='dcircles__more-btn' onClick={() => setShowMoreEO(v => !v)}>

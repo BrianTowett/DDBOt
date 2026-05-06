@@ -263,6 +263,38 @@
         gap: 8px;
     }
 
+    &__streak-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        align-self: flex-start;
+        animation: streak-pop 0.3s ease;
+
+        &--even {
+            background: rgba(46, 125, 50, 0.18);
+            color: #4caf50;
+            border: 1px solid rgba(46, 125, 50, 0.4);
+            box-shadow: 0 0 8px rgba(46, 125, 50, 0.25);
+        }
+        &--odd {
+            background: rgba(198, 40, 40, 0.18);
+            color: #ef5350;
+            border: 1px solid rgba(198, 40, 40, 0.4);
+            box-shadow: 0 0 8px rgba(198, 40, 40, 0.25);
+        }
+    }
+
+    @keyframes streak-pop {
+        0%   { transform: scale(0.85); opacity: 0; }
+        60%  { transform: scale(1.06); }
+        100% { transform: scale(1);    opacity: 1; }
+    }
+
     &__recent-header {
         display: flex;
         justify-content: space-between;
