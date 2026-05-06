@@ -451,8 +451,13 @@ const MatchesSignal: React.FC = () => {
         const coolMs  = 30_000;
         const coolOk  = Date.now() - (notifCoolRef.current[symbol] ?? 0) > coolMs;
 
-        if (lockedSymRef.current === symbol && prev === 'MATCH' && current === 'NEUTRAL') {
-            playDangerById(dangerSndRef.current);
+        // Danger sound + auto-unlock: locked symbol lost its confirmed signal.
+        // Also silently clears stale locks restored from localStorage after a page
+        // reload (prev is 'NEUTRAL' by default on mount, so no danger sound then).
+        if (lockedSymRef.current === symbol && current === 'NEUTRAL' && next.ready) {
+            if (prev === 'MATCH') {
+                playDangerById(dangerSndRef.current);
+            }
             autoUnlockRef.current();
         }
 

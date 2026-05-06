@@ -606,14 +606,16 @@ const DPToolsAI: React.FC = () => {
         const lastAt  = notifCoolRef.current[symbol] ?? 0;
         const coolOk  = Date.now() - lastAt > coolMs;
 
-        // Danger sound + auto-unlock: locked symbol just lost its confirmed signal
-        if (
-            lockedSymRef.current === symbol &&
-            prev !== 'NEUTRAL' &&
-            current === 'NEUTRAL'
-        ) {
-            playDangerById(dangerSndRef.current);
-            // Immediately clear the lock so it can never fire again until re-locked
+        // Danger sound + auto-unlock: locked symbol lost its confirmed signal.
+        // Also handles stale locks restored from localStorage after a page reload —
+        // in that case prev is 'NEUTRAL' (prevSignalsRef resets on mount) so we
+        // silently clear the lock without playing the danger sound.
+        if (lockedSymRef.current === symbol && current === 'NEUTRAL' && next.ready) {
+            if (prev !== 'NEUTRAL') {
+                // Signal was active this session → alert the user
+                playDangerById(dangerSndRef.current);
+            }
+            // Always clear the stale or expired lock
             autoUnlockRef.current();
         }
 
