@@ -46,6 +46,7 @@ const DCirclesAnalysis = () => {
     const [currentDigit, setCurrentDigit] = useState<number | null>(null);
     const [digitCounts, setDigitCounts] = useState<number[]>(Array(10).fill(0));
     const [recentEO, setRecentEO] = useState<string[]>([]);
+    const [showMoreEO, setShowMoreEO] = useState(false);
     const [overUnder, setOverUnder] = useState(5);
     const [totalTicks, setTotalTicks] = useState(0);
     const [connected, setConnected] = useState(false);
@@ -110,7 +111,7 @@ const DCirclesAnalysis = () => {
                     rebuild();
 
                     const eoHistory = ticksRef.current.map(d => (d % 2 === 0 ? 'E' : 'O'));
-                    setRecentEO(eoHistory.slice(-20));
+                    setRecentEO(eoHistory.slice(-55));
 
                     if (quotes.length > 0) {
                         const lastQ = quotes[quotes.length - 1];
@@ -141,7 +142,7 @@ const DCirclesAnalysis = () => {
 
                     setRecentEO(prev => {
                         const updated = [...prev, digit % 2 === 0 ? 'E' : 'O'];
-                        return updated.slice(-20);
+                        return updated.slice(-55);
                     });
                     setLoading(false);
                 }
@@ -306,10 +307,12 @@ const DCirclesAnalysis = () => {
             <div className='dcircles__recent-section'>
                 <div className='dcircles__recent-header'>
                     <span>Recent E/O</span>
-                    <button className='dcircles__more-btn'>More</button>
+                    <button className='dcircles__more-btn' onClick={() => setShowMoreEO(v => !v)}>
+                        {showMoreEO ? 'Less' : 'More'}
+                    </button>
                 </div>
                 <div className='dcircles__eo-dots'>
-                    {recentEO.slice(-11).map((eo, i) => (
+                    {(showMoreEO ? recentEO : recentEO.slice(-11)).map((eo, i) => (
                         <div
                             key={i}
                             className={`dcircles__eo-dot ${eo === 'E' ? 'dcircles__eo-dot--even' : 'dcircles__eo-dot--odd'}`}
