@@ -490,9 +490,10 @@ const posClass = (ok: boolean)  => (ok  ? 'dp-ai__pos--pass' : 'dp-ai__pos--fail
 const DPToolsAI: React.FC = () => {
     const [tickCount, setTickCount] = useState(DEFAULT_TICKS);
     const [markets, setMarkets] = useState<MarketsMap>({});
-    const [connected, setConnected] = useState(false);
-    const [scanTime, setScanTime] = useState<Date | null>(null);
-    const [filter, setFilter] = useState<'ALL' | 'EVEN' | 'ODD'>('ALL');
+    const [connected,    setConnected]    = useState(false);
+    const [reconnecting, setReconnecting] = useState(false);
+    const [scanTime,     setScanTime]     = useState<Date | null>(null);
+    const [filter,       setFilter]       = useState<'ALL' | 'EVEN' | 'ODD'>('ALL');
 
     // Dynamic market list — starts from fallback, updated by active_symbols API
     const [marketList, setMarketList] = useState<{ label: string; value: string }[]>(FALLBACK_MARKETS);
@@ -528,11 +529,13 @@ const DPToolsAI: React.FC = () => {
     // Stable ref to auto-unlock function so updateMarket (empty deps) can call it
     const autoUnlockRef = useRef<() => void>(() => {});
 
-    const wsRef         = useRef<WebSocket | null>(null);
-    const reqMapRef     = useRef<Record<number, string>>({});
-    const stateRef      = useRef<MarketsMap>({});
-    const tickCountRef  = useRef(DEFAULT_TICKS);
+    const wsRef          = useRef<WebSocket | null>(null);
+    const reqMapRef      = useRef<Record<number, string>>({});
+    const stateRef       = useRef<MarketsMap>({});
+    const tickCountRef   = useRef(DEFAULT_TICKS);
     const prevSignalsRef = useRef<Record<string, 'EVEN' | 'ODD' | 'NEUTRAL'>>({});
+    const reconnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const mountedRef     = useRef(true);
     const notifOnRef    = useRef(notifOn);
     const selectedSndRef = useRef<SoundId>(selectedSnd);
     const notifCoolRef  = useRef<Record<string, number>>({});
@@ -631,6 +634,8 @@ const DPToolsAI: React.FC = () => {
 
     const startScan = useCallback(
         (count: number, list?: { label: string; value: string }[]) => {
+            if (reconnTimerRef.current) { clearTimeout(reconnTimerRef.current); reconnTimerRef.current = null; }
+            setReconnecting(false);
             if (wsRef.current) wsRef.current.close();
             const useList = list ?? marketListRef.current;
             initMarkets(useList);
@@ -769,14 +774,28 @@ const DPToolsAI: React.FC = () => {
             };
 
             ws.onerror = () => setConnected(false);
-            ws.onclose = () => setConnected(false);
+            ws.onclose = () => {
+                setConnected(false);
+                if (!mountedRef.current) return;
+                setReconnecting(true);
+                reconnTimerRef.current = setTimeout(() => {
+                    if (!mountedRef.current) return;
+                    setReconnecting(false);
+                    startScan(tickCountRef.current);
+                }, 3000);
+            };
         },
         [initMarkets, updateMarket]
     );
 
     useEffect(() => {
+        mountedRef.current = true;
         startScan(tickCount);
-        return () => { wsRef.current?.close(); };
+        return () => {
+            mountedRef.current = false;
+            if (reconnTimerRef.current) clearTimeout(reconnTimerRef.current);
+            wsRef.current?.close();
+        };
     }, []);
 
     const handleRescan = () => startScan(tickCount);
@@ -828,8 +847,9 @@ const DPToolsAI: React.FC = () => {
         <div className='dp-ai'>
             <div className='dp-ai__header'>
                 <div className='dp-ai__title-row'>
-                    <span className={`dp-ai__dot ${connected ? 'dp-ai__dot--live' : 'dp-ai__dot--off'}`} />
+                    <span className={`dp-ai__dot ${connected ? 'dp-ai__dot--live' : reconnecting ? 'dp-ai__dot--reconnecting' : 'dp-ai__dot--off'}`} />
                     <h2 className='dp-ai__title'>Even/Odd Signal — Volatility Scanner</h2>
+                    {reconnecting && <span className='dp-ai__reconnect-badge'>↻ Reconnecting…</span>}
                 </div>
                 <p className='dp-ai__subtitle'>
                     Scanning {marketList.length} markets (auto-detected) · confirmed after {CONFIRM_WINDOW} consecutive

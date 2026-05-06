@@ -207,14 +207,17 @@ function analyze(ticks: number[], prevState: MarketState | null, newDigit: numbe
 const OverUnderSignal: React.FC = () => {
     const [tickCount, setTickCount] = useState(DEFAULT_TICKS);
     const [markets, setMarkets] = useState<MarketsMap>({});
-    const [connected, setConnected] = useState(false);
-    const [scanTime, setScanTime] = useState<Date | null>(null);
-    const [filter, setFilter] = useState<'ALL' | 'OVER' | 'UNDER'>('ALL');
+    const [connected,    setConnected]    = useState(false);
+    const [reconnecting, setReconnecting] = useState(false);
+    const [scanTime,     setScanTime]     = useState<Date | null>(null);
+    const [filter,       setFilter]       = useState<'ALL' | 'OVER' | 'UNDER'>('ALL');
 
-    const wsRef = useRef<WebSocket | null>(null);
-    const reqMapRef = useRef<Record<number, string>>({});
-    const stateRef = useRef<MarketsMap>({});
-    const tickCountRef = useRef(DEFAULT_TICKS);
+    const wsRef          = useRef<WebSocket | null>(null);
+    const reqMapRef      = useRef<Record<number, string>>({});
+    const stateRef       = useRef<MarketsMap>({});
+    const tickCountRef   = useRef(DEFAULT_TICKS);
+    const reconnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const mountedRef     = useRef(true);
 
     const initMarkets = useCallback(() => {
         const init: MarketsMap = {};
@@ -232,6 +235,8 @@ const OverUnderSignal: React.FC = () => {
 
     const startScan = useCallback(
         (count: number) => {
+            if (reconnTimerRef.current) { clearTimeout(reconnTimerRef.current); reconnTimerRef.current = null; }
+            setReconnecting(false);
             if (wsRef.current) wsRef.current.close();
             initMarkets();
             tickCountRef.current = count;
@@ -307,14 +312,26 @@ const OverUnderSignal: React.FC = () => {
             };
 
             ws.onerror = () => setConnected(false);
-            ws.onclose = () => setConnected(false);
+            ws.onclose = () => {
+                setConnected(false);
+                if (!mountedRef.current) return;
+                setReconnecting(true);
+                reconnTimerRef.current = setTimeout(() => {
+                    if (!mountedRef.current) return;
+                    setReconnecting(false);
+                    startScan(tickCountRef.current);
+                }, 3000);
+            };
         },
         [initMarkets, updateMarket]
     );
 
     useEffect(() => {
+        mountedRef.current = true;
         startScan(tickCount);
         return () => {
+            mountedRef.current = false;
+            if (reconnTimerRef.current) clearTimeout(reconnTimerRef.current);
             wsRef.current?.close();
         };
     }, []);
@@ -352,8 +369,9 @@ const OverUnderSignal: React.FC = () => {
         <div className='ou'>
             <div className='ou__header'>
                 <div className='ou__title-row'>
-                    <span className={`ou__dot ${connected ? 'ou__dot--live' : 'ou__dot--off'}`} />
+                    <span className={`ou__dot ${connected ? 'ou__dot--live' : reconnecting ? 'ou__dot--reconnecting' : 'ou__dot--off'}`} />
                     <h2 className='ou__title'>Over/Under Signal — All Markets</h2>
+                    {reconnecting && <span className='ou__reconnect-badge'>↻ Reconnecting…</span>}
                     {/* <span className='ou__mintpal'> */}
                     {/* Trade on <a href='https://www.mintpal.com' target='_blank' rel='noreferrer'>mintpal.com</a> */}
                     {/* </span> */}
