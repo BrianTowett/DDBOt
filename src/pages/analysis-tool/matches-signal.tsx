@@ -47,6 +47,7 @@ const CONFIRM_WINDOW   = 5;
 const TICK_SIZES       = [100, 200, 500, 1000];
 const DEFAULT_TICKS    = 1000;
 const MATCH_THRESHOLD  = 0.3;
+const BLUE_ISOLATION   = 0.6; // every other digit must be >0.6% away from blue
 
 const LS_NOTIF_ON   = 'ms_notif_on';
 const LS_NOTIF_SND  = 'ms_notif_snd';
@@ -313,7 +314,15 @@ function analyzeDigitsMS(ticks: number[]): MSAnalysis {
     const blue   = sorted[8];
 
     const diff = Math.abs(green.pct - blue.pct);
-    const rawSignal: 'MATCH' | 'NEUTRAL' = diff <= MATCH_THRESHOLD ? 'MATCH' : 'NEUTRAL';
+
+    // Every digit except blue and green must be more than BLUE_ISOLATION% away from blue.
+    // This ensures blue is isolated — no nearby competitor that could easily overtake it.
+    const blueIsolated = pcts.every((p, d) => {
+        if (d === blue.digit || d === green.digit) return true;
+        return Math.abs(p - blue.pct) > BLUE_ISOLATION;
+    });
+
+    const rawSignal: 'MATCH' | 'NEUTRAL' = diff <= MATCH_THRESHOLD && blueIsolated ? 'MATCH' : 'NEUTRAL';
 
     return {
         rawSignal,
