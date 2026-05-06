@@ -214,7 +214,9 @@ const OverUnderSignal: React.FC = () => {
     const wsRef = useRef<WebSocket | null>(null);
     const reqMapRef = useRef<Record<number, string>>({});
     const stateRef = useRef<MarketsMap>({});
-    const tickCountRef = useRef(DEFAULT_TICKS);
+    const tickCountRef   = useRef(DEFAULT_TICKS);
+    const intentionalRef = useRef(false);
+    const mountedRef     = useRef(true);
 
     const initMarkets = useCallback(() => {
         const init: MarketsMap = {};
@@ -232,6 +234,7 @@ const OverUnderSignal: React.FC = () => {
 
     const startScan = useCallback(
         (count: number) => {
+            intentionalRef.current = true;
             if (wsRef.current) wsRef.current.close();
             initMarkets();
             tickCountRef.current = count;
@@ -241,6 +244,7 @@ const OverUnderSignal: React.FC = () => {
             wsRef.current = ws;
 
             ws.onopen = () => {
+                intentionalRef.current = false;
                 setConnected(true);
                 reqMapRef.current = {};
                 MARKETS.forEach((m, i) => {
@@ -307,14 +311,25 @@ const OverUnderSignal: React.FC = () => {
             };
 
             ws.onerror = () => setConnected(false);
-            ws.onclose = () => setConnected(false);
+            ws.onclose = () => {
+                setConnected(false);
+                if (intentionalRef.current || !mountedRef.current) return;
+                // Unexpected network drop — reconnect after 3 s
+                setTimeout(() => {
+                    if (!mountedRef.current) return;
+                    startScan(tickCountRef.current);
+                }, 3000);
+            };
         },
         [initMarkets, updateMarket]
     );
 
     useEffect(() => {
+        mountedRef.current = true;
         startScan(tickCount);
         return () => {
+            mountedRef.current = false;
+            intentionalRef.current = true;
             wsRef.current?.close();
         };
     }, []);

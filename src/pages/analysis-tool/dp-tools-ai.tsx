@@ -531,9 +531,11 @@ const DPToolsAI: React.FC = () => {
     const wsRef         = useRef<WebSocket | null>(null);
     const reqMapRef     = useRef<Record<number, string>>({});
     const stateRef      = useRef<MarketsMap>({});
-    const tickCountRef  = useRef(DEFAULT_TICKS);
+    const tickCountRef   = useRef(DEFAULT_TICKS);
     const prevSignalsRef = useRef<Record<string, 'EVEN' | 'ODD' | 'NEUTRAL'>>({});
-    const notifOnRef    = useRef(notifOn);
+    const intentionalRef = useRef(false);
+    const mountedRef     = useRef(true);
+    const notifOnRef     = useRef(notifOn);
     const selectedSndRef = useRef<SoundId>(selectedSnd);
     const notifCoolRef  = useRef<Record<string, number>>({});
 
@@ -631,6 +633,7 @@ const DPToolsAI: React.FC = () => {
 
     const startScan = useCallback(
         (count: number, list?: { label: string; value: string }[]) => {
+            intentionalRef.current = true;
             if (wsRef.current) wsRef.current.close();
             const useList = list ?? marketListRef.current;
             initMarkets(useList);
@@ -641,6 +644,7 @@ const DPToolsAI: React.FC = () => {
             wsRef.current = ws;
 
             ws.onopen = () => {
+                intentionalRef.current = false;
                 setConnected(true);
                 reqMapRef.current = {};
 
@@ -769,14 +773,27 @@ const DPToolsAI: React.FC = () => {
             };
 
             ws.onerror = () => setConnected(false);
-            ws.onclose = () => setConnected(false);
+            ws.onclose = () => {
+                setConnected(false);
+                if (intentionalRef.current || !mountedRef.current) return;
+                // Unexpected network drop — reconnect after 3 s
+                setTimeout(() => {
+                    if (!mountedRef.current) return;
+                    startScan(tickCountRef.current);
+                }, 3000);
+            };
         },
         [initMarkets, updateMarket]
     );
 
     useEffect(() => {
+        mountedRef.current = true;
         startScan(tickCount);
-        return () => { wsRef.current?.close(); };
+        return () => {
+            mountedRef.current = false;
+            intentionalRef.current = true;
+            wsRef.current?.close();
+        };
     }, []);
 
     const handleRescan = () => startScan(tickCount);
